@@ -1,0 +1,1 @@
+# systemc-common-practices
