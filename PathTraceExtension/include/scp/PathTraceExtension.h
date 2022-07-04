@@ -31,20 +31,21 @@ namespace scp {
  *          transactions as they pass through a network.
  */
 
-class PathTraceExtension : public tlm::tlm_extension<PathTraceExtension>, public std::vector<sc_core::sc_object*> {
+class PathTraceExtension : public tlm::tlm_extension<PathTraceExtension>,
+                           public std::vector<sc_core::sc_object*>
+{
 public:
     PathTraceExtension() = default;
     PathTraceExtension(const PathTraceExtension&) = default;
 
 public:
-    virtual tlm_extension_base* clone() const override
-    {
+    virtual tlm_extension_base* clone() const override {
         return new PathTraceExtension(*this);
     }
 
-    virtual void copy_from(const tlm_extension_base& ext) override
-    {
-        const PathTraceExtension& other = static_cast<const PathTraceExtension&>(ext);
+    virtual void copy_from(const tlm_extension_base& ext) override {
+        const PathTraceExtension&
+            other = static_cast<const PathTraceExtension&>(ext);
         *this = other;
     }
 
@@ -52,28 +53,23 @@ public:
      * @brief Stamp object into the PathTrace
      * @param obj  Object to add to the PathTrace
      */
-    void stamp(sc_core::sc_object* obj)
-    {
-        push_back(obj);
-    }
+    void stamp(sc_core::sc_object* obj) { push_back(obj); }
 
     /**
      * @brief Convenience function to special clear vector before stamping
      * @param obj  Object to add to the PathTrace
      */
-    void initiator_stamp(sc_core::sc_object* obj)
-    {
+    void initiator_stamp(sc_core::sc_object* obj) {
         clear();
         stamp(obj);
     }
     /**
      * @brief convert extension to a string
      * @param separator (default "->")
-     * @return a string consisting of the names of each object stamped into the path
-     *         separated with the separator provided.
+     * @return a string consisting of the names of each object stamped into the
+     * path separated with the separator provided.
      */
-    std::string to_string(std::string separator = "->")
-    {
+    std::string to_string(std::string separator = "->") {
         std::stringstream info;
         std::string s;
         for (auto o : *this) {
@@ -83,5 +79,5 @@ public:
         return info.str();
     }
 };
-}
+} // namespace scp
 #endif

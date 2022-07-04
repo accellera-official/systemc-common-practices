@@ -12,34 +12,31 @@
   implied.  See the License for the specific language governing
   permissions and limitations under the License.
  ****************************************************************************/
- 
+
 #include <scp/PathTraceExtension.h>
 #include <scp/MasterIDExtension.h>
 
 #include <systemc>
 #include <tlm>
 
-
-SC_MODULE(test)
-{
-    SC_CTOR(test){
-
+struct test : public sc_core::sc_module {
+    test(const sc_core::sc_module_name& nm): sc_module(nm) {
         scp::PathTraceExtension ext;
         ext.initiator_stamp(this);
-        SC_REPORT_INFO("ext test",ext.to_string().c_str());
+        SC_REPORT_INFO("ext test", ext.to_string().c_str());
 
         ext.initiator_stamp(this);
         ext.stamp(this);
         ext.stamp(this);
-        SC_REPORT_INFO("ext test",ext.to_string().c_str());
+        SC_REPORT_INFO("ext test", ext.to_string().c_str());
 
         scp::MasterIDExtension mid(0x1234);
-        mid=0x2345;
-        mid&=0xff;
-        mid<<=4;
-        uint64_t myint=mid+mid;
-        myint+=mid;
-        if (mid==0x450) {
+        mid = 0x2345;
+        mid &= 0xff;
+        mid <<= 4;
+        uint64_t myint = mid + mid;
+        myint += mid;
+        if (mid == 0x450) {
             SC_REPORT_INFO("ext test", "Success\n");
         } else {
             SC_REPORT_INFO("ext test", "Failour\n");
@@ -47,12 +44,9 @@ SC_MODULE(test)
     }
 };
 
-int sc_main(int argc, char **argv)
-{
+int sc_main(int argc, char** argv) {
     test test1("test");
 
     sc_core::sc_start();
     return 0;
 }
-
-

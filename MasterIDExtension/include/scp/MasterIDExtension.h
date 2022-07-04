@@ -26,42 +26,50 @@ namespace scp {
  *
  * @brief Master ID recording TLM extension
  *
- * @details Ignorable Extension type that can be used to add a Master ID (uint64_t).
- *          This is typically used for e.g. evaluating exclusive accesses.
+ * @details Ignorable Extension type that can be used to add a Master ID
+ * (uint64_t). This is typically used for e.g. evaluating exclusive accesses.
  */
 
-class MasterIDExtension : public tlm::tlm_extension<MasterIDExtension> {
+class MasterIDExtension : public tlm::tlm_extension<MasterIDExtension>
+{
     uint64_t m_id;
+
 public:
-    MasterIDExtension(uint64_t id) { m_id=id; }
+    MasterIDExtension(uint64_t id) { m_id = id; }
     MasterIDExtension(const MasterIDExtension&) = default;
 
-    virtual tlm_extension_base* clone() const override
-    {
+    virtual tlm_extension_base* clone() const override {
         return new MasterIDExtension(*this);
     }
 
-    virtual void copy_from(const tlm_extension_base& ext) override
-    {
-        const MasterIDExtension& other = static_cast<const MasterIDExtension&>(ext);
+    virtual void copy_from(const tlm_extension_base& ext) override {
+        const MasterIDExtension& other = static_cast<const MasterIDExtension&>(
+            ext);
         *this = other;
     }
 
-    operator uint64_t () {return m_id;};
+    operator uint64_t() { return m_id; };
 
-#define overload(_OP) MasterIDExtension& operator _OP(const uint64_t id){this->m_id _OP id; return *this; }
-overload(+=);
-overload(-=);
-overload(*=);
-overload(/=);
-overload(%=);
-overload(&=);
-overload(|=);
-overload(^=);
-overload(<<=);
-overload(>>=);
+#define overload(_OP)                                    \
+    MasterIDExtension& operator _OP(const uint64_t id) { \
+        this->m_id _OP id;                               \
+        return *this;                                    \
+    }
+    overload(+=);
+    overload(-=);
+    overload(*=);
+    overload(/=);
+    overload(%=);
+    overload(&=);
+    overload(|=);
+    overload(^=);
+    overload(<<=);
+    overload(>>=);
 
-    MasterIDExtension& operator=(const uint64_t id) {m_id=id; return *this;}
+    MasterIDExtension& operator=(const uint64_t id) {
+        m_id = id;
+        return *this;
+    }
 };
-}
+} // namespace scp
 #endif
