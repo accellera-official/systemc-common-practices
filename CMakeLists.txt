@@ -3,27 +3,38 @@ project(scp VERSION 1.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ standard to build all targets.")
 
+set(GITHUB "https://github.com/" CACHE STRING "github base url")
+
 include(FetchContent)
 include(CTest)
 
 FetchContent_Declare(
   cpm-cmake
-  GIT_REPOSITORY https://github.com/cpm-cmake/CPM.cmake.git
+  GIT_REPOSITORY ${GITHUB}cpm-cmake/CPM.cmake.git
   GIT_SHALLOW True
-  GIT_TAG v0.31.1)
+  GIT_TAG v0.31.1
+)
+
 FetchContent_MakeAvailable(cpm-cmake)
 include(${cpm-cmake_SOURCE_DIR}/cmake/CPM.cmake)
-cpmaddpackage("gh:TheLartians/PackageProject.cmake@1.4.1")
+
+cpmaddpackage("${GITHUB}TheLartians/PackageProject.cmake.git@1.4.1")
 
 cpmaddpackage(
   NAME SystemCLanguage
-  GIT_REPOSITORY  https://github.com/accellera-official/systemc.git
+  GIT_REPOSITORY  ${GITHUB}accellera-official/systemc.git
   GIT_SHALLOW True
   GIT_TAG 2.3.3
 )
 
-add_subdirectory(${PROJECT_SOURCE_DIR}/MasterIDExtension)
-add_subdirectory(${PROJECT_SOURCE_DIR}/PathTraceExtension)
 
+cpmaddpackage(
+  NAME initiator_id
+  SOURCE_DIR ${PROJECT_SOURCE_DIR}/tlm_extensions/initiator_id
+)
+cpmaddpackage(
+  NAME path_trace
+  SOURCE_DIR ${PROJECT_SOURCE_DIR}/tlm_extensions/path_trace
+)
 enable_testing()
-add_subdirectory(tests)
+add_subdirectory(examples)

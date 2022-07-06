@@ -20,7 +20,7 @@
 #include <systemc>
 #include <tlm>
 
-namespace scp {
+namespace scp::tlm_extensions {
 
 /**
  * @class Path recording TLM extension
@@ -31,20 +31,20 @@ namespace scp {
  *          transactions as they pass through a network.
  */
 
-class PathTraceExtension : public tlm::tlm_extension<PathTraceExtension>, public std::vector<sc_core::sc_object*> {
-public:
-    PathTraceExtension() = default;
-    PathTraceExtension(const PathTraceExtension&) = default;
+class path_trace : public tlm::tlm_extension<path_trace>
+{
+    std::vector<sc_core::sc_object*> m_path;
 
 public:
-    virtual tlm_extension_base* clone() const override
-    {
-        return new PathTraceExtension(*this);
+    path_trace() = default;
+    path_trace(const path_trace&) = default;
+
+    virtual tlm_extension_base* clone() const override {
+        return new path_trace(*this);
     }
 
-    virtual void copy_from(const tlm_extension_base& ext) override
-    {
-        const PathTraceExtension& other = static_cast<const PathTraceExtension&>(ext);
+    virtual void copy_from(const tlm_extension_base& ext) override {
+        const path_trace& other = static_cast<const path_trace&>(ext);
         *this = other;
     }
 
@@ -52,36 +52,28 @@ public:
      * @brief Stamp object into the PathTrace
      * @param obj  Object to add to the PathTrace
      */
-    void stamp(sc_core::sc_object* obj)
-    {
-        push_back(obj);
-    }
+    void stamp(sc_core::sc_object* obj) { m_path.push_back(obj); }
 
     /**
-     * @brief Convenience function to special clear vector before stamping
-     * @param obj  Object to add to the PathTrace
+     * @brief Convenience function to clear vector (eg. before returning to a
+     * pool)
      */
-    void initiator_stamp(sc_core::sc_object* obj)
-    {
-        clear();
-        stamp(obj);
-    }
+    void reset() { m_path.clear(); }
     /**
      * @brief convert extension to a string
      * @param separator (default "->")
-     * @return a string consisting of the names of each object stamped into the path
-     *         separated with the separator provided.
+     * @return a string consisting of the names of each object stamped into the
+     * path separated with the separator provided.
      */
-    std::string to_string(std::string separator = "->")
-    {
+    std::string to_string(std::string separator = "->") {
         std::stringstream info;
         std::string s;
-        for (auto o : *this) {
+        for (auto o : m_path) {
             info << s << o->name();
             s = separator;
         }
         return info.str();
     }
 };
-}
+} // namespace scp::tlm_extensions
 #endif
