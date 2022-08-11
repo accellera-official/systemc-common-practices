@@ -36,5 +36,9 @@ cpmaddpackage(
   NAME path_trace
   SOURCE_DIR ${PROJECT_SOURCE_DIR}/tlm_extensions/path_trace
 )
+cpmaddpackage(
+  NAME report
+  SOURCE_DIR ${PROJECT_SOURCE_DIR}/report
+)
 enable_testing()
 add_subdirectory(examples)
