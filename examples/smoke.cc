@@ -15,6 +15,7 @@
 
 #include <scp/tlm_extensions/initiator_id.h>
 #include <scp/tlm_extensions/path_trace.h>
+#include <scp/report.h>
 
 #include <systemc>
 #include <tlm>
@@ -23,13 +24,14 @@ SC_MODULE (test) {
     SC_CTOR (test) {
         scp::tlm_extensions::path_trace ext;
         ext.stamp(this);
-        SC_REPORT_INFO("ext test", ext.to_string().c_str());
+        SCCINFO(SCMOD)<<ext.to_string();
         ext.reset();
 
         ext.stamp(this);
         ext.stamp(this);
         ext.stamp(this);
-        SC_REPORT_INFO("ext test", ext.to_string().c_str());
+
+        SCCINFO(SCMOD)<<ext.to_string();
         ext.reset();
 
         scp::tlm_extensions::initiator_id mid(0x1234);
@@ -47,8 +49,9 @@ SC_MODULE (test) {
 };
 
 int sc_main(int argc, char** argv) {
+	SCCINFO()<<"Constructing design";
     test test1("test");
-
+	SCCINFO()<<"Starting simulation";
     sc_core::sc_start();
     return 0;
 }
