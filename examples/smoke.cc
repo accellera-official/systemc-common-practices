@@ -24,14 +24,14 @@ SC_MODULE (test) {
     SC_CTOR (test) {
         scp::tlm_extensions::path_trace ext;
         ext.stamp(this);
-        SCCINFO(SCMOD)<<ext.to_string();
+        SCP_INFO(SCMOD) << ext.to_string();
         ext.reset();
 
         ext.stamp(this);
         ext.stamp(this);
         ext.stamp(this);
 
-        SCCINFO(SCMOD)<<ext.to_string();
+        SCP_INFO(SCMOD) << ext.to_string();
         ext.reset();
 
         scp::tlm_extensions::initiator_id mid(0x1234);
@@ -49,9 +49,9 @@ SC_MODULE (test) {
 };
 
 int sc_main(int argc, char** argv) {
-	SCCINFO()<<"Constructing design";
+    SCP_INFO() << "Constructing design";
     test test1("test");
-	SCCINFO()<<"Starting simulation";
+    SCP_INFO() << "Starting simulation";
     sc_core::sc_start();
     return 0;
 }

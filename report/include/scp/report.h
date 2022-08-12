@@ -29,8 +29,9 @@
 #undef ERROR
 #endif
 
-//! the name of the CCI property to attach to modules to control logging of this module
-#define SCC_LOG_LEVEL_PARAM_NAME "log_level"
+//! the name of the CCI property to attach to modules to control logging of
+//! this module
+#define SCP_LOG_LEVEL_PARAM_NAME "log_level"
 /** \ingroup scp-report
  *  @{
  */
@@ -39,9 +40,21 @@
 namespace scp {
 //! \brief array holding string representations of log levels
 static std::array<const char* const, 8> buffer = {
-    {"NONE", "FATAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE", "TRACEALL"}};
+    { "NONE", "FATAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE",
+      "TRACEALL" }
+};
 //! \brief enum defining the log levels
-enum class log { NONE, FATAL, ERROR, WARNING, INFO, DEBUG, TRACE, TRACEALL, DBGTRACE = TRACEALL };
+enum class log {
+    NONE,
+    FATAL,
+    ERROR,
+    WARNING,
+    INFO,
+    DEBUG,
+    TRACE,
+    TRACEALL,
+    DBGTRACE = TRACEALL
+};
 /**
  * @fn log as_log(int)
  * @brief safely convert an integer into a log level
@@ -50,9 +63,11 @@ enum class log { NONE, FATAL, ERROR, WARNING, INFO, DEBUG, TRACE, TRACEALL, DBGT
  * @return the log level
  */
 inline log as_log(int logLevel) {
-    assert(logLevel >= static_cast<int>(log::NONE) && logLevel <= static_cast<int>(log::TRACEALL));
-    std::array<const log, 8> m = {
-        {log::NONE, log::FATAL, log::ERROR, log::WARNING, log::INFO, log::DEBUG, log::TRACE, log::TRACEALL}};
+    assert(logLevel >= static_cast<int>(log::NONE) &&
+           logLevel <= static_cast<int>(log::TRACEALL));
+    std::array<const log, 8> m = { { log::NONE, log::FATAL, log::ERROR,
+                                     log::WARNING, log::INFO, log::DEBUG,
+                                     log::TRACE, log::TRACEALL } };
     return m[logLevel];
 }
 /**
@@ -66,8 +81,8 @@ inline log as_log(int logLevel) {
 inline std::istream& operator>>(std::istream& is, log& val) {
     std::string buf;
     is >> buf;
-    for(auto i = 0U; i <= static_cast<unsigned>(log::TRACEALL); ++i) {
-        if(std::strcmp(buf.c_str(), buffer[i]) == 0) {
+    for (auto i = 0U; i <= static_cast<unsigned>(log::TRACEALL); ++i) {
+        if (std::strcmp(buf.c_str(), buffer[i]) == 0) {
             val = as_log(i);
             return is;
         }
@@ -88,16 +103,19 @@ inline std::ostream& operator<<(std::ostream& os, log const& val) {
 }
 /**
  * @fn void init_logging(log=log::WARNING, unsigned=24, bool=false)
- * @brief initializes the SystemC logging system with a particular logging level
+ * @brief initializes the SystemC logging system with a particular logging
+ * level
  *
  * @param level the log level
  * @param type_field_width the with of the type field in the output
  * @param print_time whether to print the system time stamp
  */
-void init_logging(log level = log::WARNING, unsigned type_field_width = 24, bool print_time = false);
+void init_logging(log level = log::WARNING, unsigned type_field_width = 24,
+                  bool print_time = false);
 /**
  * @fn void init_logging(log=log::WARNING, unsigned=24, bool=false)
- * @brief initializes the SystemC logging system with a particular logging level
+ * @brief initializes the SystemC logging system with a particular logging
+ * level
  *
  * @param level the log level
  * @param type_field_width the with of the type field in the output
@@ -108,24 +126,26 @@ void reinit_logging(log level = log::WARNING);
  * @struct LogConfig
  * @brief the configuration class for the logging setup
  *
- * using this class allows to configure the logging output in many aspects. The class follows the builder pattern.
+ * using this class allows to configure the logging output in many aspects. The
+ * class follows the builder pattern.
  */
 struct LogConfig {
-    log level{log::WARNING};
-    unsigned msg_type_field_width{24};
-    bool print_sys_time{false};
-    bool print_sim_time{true};
-    bool print_delta{false};
-    bool print_severity{true};
-    bool colored_output{true};
-    std::string log_file_name{""};
-    std::string log_filter_regex{""};
-    bool log_async{true};
-    bool report_only_first_error{false};
+    log level{ log::WARNING };
+    unsigned msg_type_field_width{ 24 };
+    bool print_sys_time{ false };
+    bool print_sim_time{ true };
+    bool print_delta{ false };
+    bool print_severity{ true };
+    bool colored_output{ true };
+    std::string log_file_name{ "" };
+    std::string log_filter_regex{ "" };
+    bool log_async{ true };
+    bool report_only_first_error{ false };
 
     //! set the logging level
     LogConfig& logLevel(log);
-    //! define the width of the message field, 0 to disable, std::numeric_limits<unsigned>::max() for arbitrary width
+    //! define the width of the message field, 0 to disable,
+    //! std::numeric_limits<unsigned>::max() for arbitrary width
     LogConfig& msgTypeFieldWidth(unsigned);
     //! enable/disable printing of system time
     LogConfig& printSysTime(bool = true);
@@ -147,12 +167,14 @@ struct LogConfig {
     LogConfig& logFilterRegex(const std::string&);
     //! enable/disable asynchronous output (write to file in separate thread
     LogConfig& logAsync(bool = true);
-    //! disable/enable the supression of all error messages after the first error
+    //! disable/enable the supression of all error messages after the first
+    //! error
     LogConfig& reportOnlyFirstError(bool = true);
 };
 /**
  * @fn void init_logging(const LogConfig&)
- * @brief initializes the SystemC logging system with a particular configuration
+ * @brief initializes the SystemC logging system with a particular
+ * configuration
  *
  * @param log_config the logging configuration
  */
@@ -175,7 +197,8 @@ log get_logging_level();
  * @fn void set_cycle_base(sc_core::sc_time)
  * @brief sets the cycle base for cycle based logging
  *
- * if this is set to a non-SC_ZERO_TIME value all logging timestamps are printed as cyles (multiple of this value)
+ * if this is set to a non-SC_ZERO_TIME value all logging timestamps are
+ * printed as cyles (multiple of this value)
  *
  * @param period the cycle period
  */
@@ -187,14 +210,16 @@ void set_cycle_base(sc_core::sc_time period);
  * @return the global verbosity level
  */
 inline sc_core::sc_verbosity get_log_verbosity() {
-    return static_cast<sc_core::sc_verbosity>(::sc_core::sc_report_handler::get_verbosity_level());
+    return static_cast<sc_core::sc_verbosity>(
+        ::sc_core::sc_report_handler::get_verbosity_level());
 }
 /**
  * @fn sc_core::sc_verbosity get_log_verbosity(const char*)
  * @brief get the scope-based verbosity level
  *
- * The function returns a scope specific verbosity level if defined (e.g. by using a CCI param named "log_level").
- * Otherwise the global verbosity level is being returned
+ * The function returns a scope specific verbosity level if defined (e.g. by
+ * using a CCI param named "log_level"). Otherwise the global verbosity level
+ * is being returned
  *
  * @param t the SystemC hierarchy scope name
  * @return the verbosity level
@@ -204,22 +229,27 @@ sc_core::sc_verbosity get_log_verbosity(char const* t);
  * @fn sc_core::sc_verbosity get_log_verbosity(const char*)
  * @brief get the scope-based verbosity level
  *
- * The function returns a scope specific verbosity level if defined (e.g. by using a CCI param named "log_level").
- * Otherwise the global verbosity level is being returned
+ * The function returns a scope specific verbosity level if defined (e.g. by
+ * using a CCI param named "log_level"). Otherwise the global verbosity level
+ * is being returned
  *
  * @param t the SystemC hierarchy scope name
  * @return the verbosity level
  */
-inline sc_core::sc_verbosity get_log_verbosity(std::string const& t) { return get_log_verbosity(t.c_str()); }
+inline sc_core::sc_verbosity get_log_verbosity(std::string const& t) {
+    return get_log_verbosity(t.c_str());
+}
 /**
  * @struct ScLogger
  * @brief the logger class
  *
- * The ScLogger creates a RTTI based output stream to be used similar to std::cout
+ * The ScLogger creates a RTTI based output stream to be used similar to
+ * std::cout
  *
  * @tparam SEVERITY
  */
-template <sc_core::sc_severity SEVERITY> struct ScLogger {
+template <sc_core::sc_severity SEVERITY>
+struct ScLogger {
     /**
      * @fn  ScLogger(const char*, int, int=sc_core::SC_MEDIUM)
      * @brief
@@ -228,11 +258,8 @@ template <sc_core::sc_severity SEVERITY> struct ScLogger {
      * @param line number where the log entry originates
      * @param verbosity the log level
      */
-    ScLogger(const char* file, int line, int verbosity = sc_core::SC_MEDIUM)
-    : t(nullptr)
-    , file(file)
-    , line(line)
-    , level(verbosity){};
+    ScLogger(const char* file, int line, int verbosity = sc_core::SC_MEDIUM):
+        t(nullptr), file(file), line(line), level(verbosity){};
 
     ScLogger() = delete;
 
@@ -249,7 +276,8 @@ template <sc_core::sc_severity SEVERITY> struct ScLogger {
      *
      */
     virtual ~ScLogger() {
-        ::sc_core::sc_report_handler::report(SEVERITY, t ? t : "SystemC", os.str().c_str(), level, file, line);
+        ::sc_core::sc_report_handler::report(
+            SEVERITY, t ? t : "SystemC", os.str().c_str(), level, file, line);
     }
     /**
      * @fn ScLogger& type()
@@ -293,7 +321,7 @@ template <sc_core::sc_severity SEVERITY> struct ScLogger {
 
 protected:
     std::ostringstream os{};
-    char* t{nullptr};
+    char* t{ nullptr };
     const char* file;
     const int line;
     const int level;
@@ -303,29 +331,56 @@ protected:
  * logging macros
  */
 //! macro for log output
-#define SCCLOG(lvl, ...) ::scp::ScLogger<::sc_core::SC_INFO>(__FILE__, __LINE__, lvl / 10).type(__VA_ARGS__).get()
+#define SCP_LOG(lvl, ...)                                             \
+    ::scp::ScLogger<::sc_core::SC_INFO>(__FILE__, __LINE__, lvl / 10) \
+        .type(__VA_ARGS__)                                            \
+        .get()
 //! macro for debug trace level output
-#define SCCTRACEALL(...) if(::scp::get_log_verbosity(__VA_ARGS__) >= sc_core::SC_DEBUG) SCCLOG(sc_core::SC_DEBUG, __VA_ARGS__)
+#define SCP_TRACEALL(...)                                           \
+    if (::scp::get_log_verbosity(__VA_ARGS__) >= sc_core::SC_DEBUG) \
+    SCP_LOG(sc_core::SC_DEBUG, __VA_ARGS__)
 //! macro for trace level output
-#define SCCTRACE(...) if(::scp::get_log_verbosity(__VA_ARGS__) >= sc_core::SC_FULL) SCCLOG(sc_core::SC_FULL, __VA_ARGS__)
+#define SCP_TRACE(...)                                             \
+    if (::scp::get_log_verbosity(__VA_ARGS__) >= sc_core::SC_FULL) \
+    SCP_LOG(sc_core::SC_FULL, __VA_ARGS__)
 //! macro for debug level output
-#define SCCDEBUG(...) if(::scp::get_log_verbosity(__VA_ARGS__) >= sc_core::SC_HIGH) SCCLOG(sc_core::SC_HIGH, __VA_ARGS__)
+#define SCP_DEBUG(...)                                             \
+    if (::scp::get_log_verbosity(__VA_ARGS__) >= sc_core::SC_HIGH) \
+    SCP_LOG(sc_core::SC_HIGH, __VA_ARGS__)
 //! macro for info level output
-#define SCCINFO(...) if(::scp::get_log_verbosity(__VA_ARGS__) >= sc_core::SC_MEDIUM) SCCLOG(sc_core::SC_MEDIUM, __VA_ARGS__)
+#define SCP_INFO(...)                                                \
+    if (::scp::get_log_verbosity(__VA_ARGS__) >= sc_core::SC_MEDIUM) \
+    SCP_LOG(sc_core::SC_MEDIUM, __VA_ARGS__)
 //! macro for warning level output
-#define SCCWARN(...) ::scp::ScLogger<::sc_core::SC_WARNING>(__FILE__, __LINE__, sc_core::SC_MEDIUM).type(__VA_ARGS__).get()
+#define SCP_WARN(...)                                          \
+    ::scp::ScLogger<::sc_core::SC_WARNING>(__FILE__, __LINE__, \
+                                           sc_core::SC_MEDIUM) \
+        .type(__VA_ARGS__)                                     \
+        .get()
 //! macro for error level output
-#define SCCERR(...) ::scp::ScLogger<::sc_core::SC_ERROR>(__FILE__, __LINE__, sc_core::SC_MEDIUM).type(__VA_ARGS__).get()
+#define SCP_ERR(...)                                         \
+    ::scp::ScLogger<::sc_core::SC_ERROR>(__FILE__, __LINE__, \
+                                         sc_core::SC_MEDIUM) \
+        .type(__VA_ARGS__)                                   \
+        .get()
 //! macro for fatal message output
-#define SCCFATAL(...) ::scp::ScLogger<::sc_core::SC_FATAL>(__FILE__, __LINE__, sc_core::SC_MEDIUM).type(__VA_ARGS__).get()
+#define SCP_FATAL(...)                                       \
+    ::scp::ScLogger<::sc_core::SC_FATAL>(__FILE__, __LINE__, \
+                                         sc_core::SC_MEDIUM) \
+        .type(__VA_ARGS__)                                   \
+        .get()
 
 #ifdef NDEBUG
-#define SCC_ASSERT(expr) ((void)0)
+#define SCP_ASSERT(expr) ((void)0)
 #else
-#define SCC_ASSERT(expr) ((void)((expr) ? 0 : (SC_REPORT_FATAL(::sc_core::SC_ID_ASSERTION_FAILED_, #expr), 0)))
+#define SCP_ASSERT(expr)                                                  \
+    ((void)((expr) ? 0                                                    \
+                   : (SC_REPORT_FATAL(::sc_core::SC_ID_ASSERTION_FAILED_, \
+                                      #expr),                             \
+                      0)))
 #endif
 //! get the name of the sc_object/sc_module
 #define SCMOD this->name()
 } // namespace scp
 /** @} */ // end of scp-report
-#endif /* _SCP_REPORT_H_ */
+#endif    /* _SCP_REPORT_H_ */

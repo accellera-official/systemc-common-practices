@@ -40,11 +40,11 @@ FetchContent_GetProperties(
   POPULATED spdlog_git_FOUND
 )
 
-add_library(${PROJECT_NAME} src/scp/report.cpp)
+add_library(${PROJECT_NAME} src/report.cpp)
 
 target_include_directories(
    ${PROJECT_NAME} PUBLIC
-   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 

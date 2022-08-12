@@ -22,20 +22,20 @@
 
 SC_MODULE (test) {
     SC_CTOR (test) {
-    	SCCDEBUG(SCMOD)<<"First part";
+        SCP_DEBUG(SCMOD) << "First part";
         scp::tlm_extensions::path_trace ext;
         ext.stamp(this);
-        SCCINFO(SCMOD)<<ext.to_string();
+        SCP_INFO(SCMOD) << ext.to_string();
         ext.reset();
 
         ext.stamp(this);
         ext.stamp(this);
         ext.stamp(this);
 
-        SCCINFO(SCMOD)<<ext.to_string();
+        SCP_INFO(SCMOD) << ext.to_string();
         ext.reset();
 
-        SCCDEBUG(SCMOD)<<"Second part";
+        SCP_DEBUG(SCMOD) << "Second part";
         scp::tlm_extensions::initiator_id mid(0x1234);
         mid = 0x2345;
         mid &= 0xff;
@@ -51,12 +51,13 @@ SC_MODULE (test) {
 };
 
 int sc_main(int argc, char** argv) {
-	scp::init_logging(scp::LogConfig()
-			.logLevel(scp::log::DEBUG) // set log level to debug
-			.msgTypeFieldWidth(10));   // make the msg type column a bit tighter
-	SCCINFO()<<"Constructing design";
+    scp::init_logging(
+        scp::LogConfig()
+            .logLevel(scp::log::DEBUG) // set log level to debug
+            .msgTypeFieldWidth(10)); // make the msg type column a bit tighter
+    SCP_INFO() << "Constructing design";
     test test1("test");
-	SCCINFO()<<"Starting simulation";
+    SCP_INFO() << "Starting simulation";
     sc_core::sc_start();
     return 0;
 }
