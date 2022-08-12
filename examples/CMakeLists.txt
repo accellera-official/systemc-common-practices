@@ -9,3 +9,4 @@ macro(run_test test)
 endmacro()
 
 run_test(smoke)
+run_test(smoke_report)

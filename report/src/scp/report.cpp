@@ -466,11 +466,6 @@ auto scp::LogConfig::logAsync(bool v) -> scp::LogConfig& {
     return *this;
 }
 
-auto scp::LogConfig::dontCreateBroker(bool v) -> scp::LogConfig& {
-    this->dont_create_broker = v;
-    return *this;
-}
-
 auto scp::LogConfig::reportOnlyFirstError(bool v) -> scp::LogConfig& {
     this->report_only_first_error = v;
     return *this;

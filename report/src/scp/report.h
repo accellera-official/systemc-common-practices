@@ -29,6 +29,7 @@
 #undef ERROR
 #endif
 
+//! the name of the CCI property to attach to modules to control logging of this module
 #define SCC_LOG_LEVEL_PARAM_NAME "log_level"
 /** \ingroup scp-report
  *  @{
@@ -120,7 +121,6 @@ struct LogConfig {
     std::string log_file_name{""};
     std::string log_filter_regex{""};
     bool log_async{true};
-    bool dont_create_broker{false};
     bool report_only_first_error{false};
 
     //! set the logging level
@@ -147,8 +147,6 @@ struct LogConfig {
     LogConfig& logFilterRegex(const std::string&);
     //! enable/disable asynchronous output (write to file in separate thread
     LogConfig& logAsync(bool = true);
-    //! disable/enable the automatic creation of a CCI broker
-    LogConfig& dontCreateBroker(bool = true);
     //! disable/enable the supression of all error messages after the first error
     LogConfig& reportOnlyFirstError(bool = true);
 };
