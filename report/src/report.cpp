@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2017, 2018 MINRES Technologies GmbH
+ * Copyright 2017 - 2022 MINRES Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 #include <fstream>
 #include <systemc>
 #ifdef HAS_CCI
-#include "cci"
+#include <cci_configuration>
 #endif
 #include <mutex>
 #include <spdlog/async.h>
@@ -333,25 +333,25 @@ auto char_hash(char const* str) -> uint64_t {
 } // namespace
 
 static const array<sc_severity, 8> severity = {
-    SC_FATAL,   // scc::log::NONE
-    SC_FATAL,   // scc::log::FATAL
-    SC_ERROR,   // scc::log::ERROR
-    SC_WARNING, // scc::log::WARNING
-    SC_INFO,    // scc::log::INFO
-    SC_INFO,    // scc::log::DEBUG
-    SC_INFO,    // scc::log::TRACE
-    SC_INFO
-}; // scc::log::DBGTRACE
+    SC_FATAL,   // scp::log::NONE
+    SC_FATAL,   // scp::log::FATAL
+    SC_ERROR,   // scp::log::ERROR
+    SC_WARNING, // scp::log::WARNING
+    SC_INFO,    // scp::log::INFO
+    SC_INFO,    // scp::log::DEBUG
+    SC_INFO,    // scp::log::TRACE
+    SC_INFO     // scp::log::TRACEALL
+};
 static const array<sc_verbosity, 8> verbosity = {
-    SC_NONE,   // scc::log::NONE
-    SC_LOW,    // scc::log::FATAL
-    SC_LOW,    // scc::log::ERROR
-    SC_LOW,    // scc::log::WARNING
-    SC_MEDIUM, // scc::log::INFO
-    SC_HIGH,   // scc::log::DEBUG
-    SC_FULL,   // scc::log::TRACE
-    SC_DEBUG
-}; // scc::log::DBGTRACE
+    SC_NONE,   // scp::log::NONE
+    SC_LOW,    // scp::log::FATAL
+    SC_LOW,    // scp::log::ERROR
+    SC_LOW,    // scp::log::WARNING
+    SC_MEDIUM, // scp::log::INFO
+    SC_HIGH,   // scp::log::DEBUG
+    SC_FULL,   // scp::log::TRACE
+    SC_DEBUG   // scp::log::TRACEALL
+}; 
 
 static std::mutex cfg_guard;
 static void configure_logging() {

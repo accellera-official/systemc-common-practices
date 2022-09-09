@@ -40,5 +40,10 @@ cpmaddpackage(
   NAME report
   SOURCE_DIR ${PROJECT_SOURCE_DIR}/report
 )
-enable_testing()
-add_subdirectory(examples)
+
+if("${PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}")
+  add_subdirectory(examples)
+  if(BUILD_TESTING)
+    enable_testing()
+  endif()
+endif()

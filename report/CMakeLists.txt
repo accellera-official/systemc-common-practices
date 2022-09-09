@@ -43,12 +43,16 @@ FetchContent_GetProperties(
 add_library(${PROJECT_NAME} src/report.cpp)
 
 target_include_directories(
-   ${PROJECT_NAME} PUBLIC
-   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  ${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${spdlog_git_SRC_DIR}/include)
+if(TARGET SystemC::cci)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_CCI)
+  target_link_libraries(${PROJECT_NAME} PUBLIC SystemC::cci)
+endif()
 target_link_libraries(${PROJECT_NAME} PUBLIC SystemC::systemc)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
