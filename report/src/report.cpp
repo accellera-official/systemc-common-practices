@@ -36,12 +36,7 @@
 #include <thread>
 #include <tuple>
 #include <unordered_map>
-#ifdef __GNUC__
-#define GCC_VERSION \
-    (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
-#if GCC_VERSION < 40900
-#define USE_C_REGEX
-#endif
+#if defined(__GNUC__) || defined(__clang__)
 #define likely(x)   __builtin_expect(x, 1)
 #define unlikely(x) __builtin_expect(x, 0)
 #else
@@ -63,22 +58,14 @@ thread_local std::unordered_map<uint64_t, sc_core::sc_verbosity> lut;
 struct ExtLogConfig : public scp::LogConfig {
     shared_ptr<spdlog::logger> file_logger;
     shared_ptr<spdlog::logger> console_logger;
-#ifdef USE_C_REGEX
-    regex_t start_state{};
-#else
     regex reg_ex;
-#endif
     sc_time cycle_base{ 0, SC_NS };
     auto operator=(const scp::LogConfig& o) -> ExtLogConfig& {
         scp::LogConfig::operator=(o);
         return *this;
     }
     auto match(const char* type) -> bool {
-#ifdef USE_C_REGEX
-        return regexec(&start_state, type, 0, nullptr, 0) == 0;
-#else
         return regex_search(type, reg_ex);
-#endif
     }
 };
 
@@ -412,13 +399,8 @@ static void configure_logging() {
             log_cfg.file_logger = spdlog::get("file_logger");
     }
     if (log_cfg.log_filter_regex.size()) {
-#ifdef USE_C_REGEX
-        regcomp(&log_cfg.start_state, log_cfg.log_filter_regex.c_str(),
-                REG_EXTENDED);
-#else
         log_cfg.reg_ex = regex(log_cfg.log_filter_regex,
                                regex::extended | regex::icase);
-#endif
     }
 }
 
