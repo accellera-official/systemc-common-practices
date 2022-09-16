@@ -64,9 +64,7 @@ struct ExtLogConfig : public scp::LogConfig {
         scp::LogConfig::operator=(o);
         return *this;
     }
-    auto match(const char* type) -> bool {
-        return regex_search(type, reg_ex);
-    }
+    auto match(const char* type) -> bool { return regex_search(type, reg_ex); }
 };
 
 thread_local ExtLogConfig log_cfg;
@@ -338,7 +336,7 @@ static const array<sc_verbosity, 8> verbosity = {
     SC_HIGH,   // scp::log::DEBUG
     SC_FULL,   // scp::log::TRACE
     SC_DEBUG   // scp::log::TRACEALL
-}; 
+};
 
 static std::mutex cfg_guard;
 static void configure_logging() {
