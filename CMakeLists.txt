@@ -36,5 +36,14 @@ cpmaddpackage(
   NAME path_trace
   SOURCE_DIR ${PROJECT_SOURCE_DIR}/tlm_extensions/path_trace
 )
-enable_testing()
-add_subdirectory(examples)
+cpmaddpackage(
+  NAME report
+  SOURCE_DIR ${PROJECT_SOURCE_DIR}/report
+)
+
+if("${PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}")
+  add_subdirectory(examples)
+  if(BUILD_TESTING)
+    enable_testing()
+  endif()
+endif()
