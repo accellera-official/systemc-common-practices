@@ -510,24 +510,52 @@ auto scp::get_log_verbosity(char const* str) -> sc_core::sc_verbosity {
     if (it != lut.end())
         return it->second;
     if (sc_core::sc_get_current_object()) {
-        auto param_name = std::string(str) + "." SCP_LOG_LEVEL_PARAM_NAME;
-        auto h = cci::cci_get_broker().get_param_handle<unsigned>(param_name);
-        if (h.is_valid()) {
-            sc_core::sc_verbosity ret = verbosity.at(
-                std::min<unsigned>(h.get_value(), verbosity.size() - 1));
-            lut[k] = ret;
-            return ret;
-        } else {
-            auto val = cci::cci_get_broker().get_preset_cci_value(param_name);
-            auto global_verb = static_cast<sc_core::sc_verbosity>(
-                ::sc_core::sc_report_handler::get_verbosity_level());
-            sc_core::sc_verbosity ret = val.is_int()
-                                            ? verbosity.at(std::min<unsigned>(
-                                                  val.get_int(),
-                                                  verbosity.size() - 1))
-                                            : global_verb;
-            lut[k] = ret;
-            return ret;
+        string current_name = std::string(str);
+        while (true) {
+            string param_name;
+
+            if (current_name.empty())
+                param_name = SCP_LOG_LEVEL_PARAM_NAME;
+            else
+                param_name = current_name + "." SCP_LOG_LEVEL_PARAM_NAME;
+
+            auto h = cci::cci_get_broker().get_param_handle<unsigned>(
+                param_name);
+
+            if (h.is_valid()) {
+                sc_core::sc_verbosity ret = verbosity.at(
+                    std::min<unsigned>(h.get_value(), verbosity.size() - 1));
+                lut[k] = ret;
+                return ret;
+            } else {
+                auto val = cci::cci_get_broker().get_preset_cci_value(
+                    param_name);
+                auto global_verb = static_cast<sc_core::sc_verbosity>(
+                    ::sc_core::sc_report_handler::get_verbosity_level());
+
+                if (val.is_int()) {
+                    sc_core::sc_verbosity ret = verbosity.at(
+                        std::min<unsigned>(val.get_int(),
+                                           verbosity.size() - 1));
+                    lut[k] = ret;
+                    return ret;
+                } else {
+                    if (current_name.empty()) {
+                        sc_core::sc_verbosity ret = global_verb;
+                        lut[k] = ret;
+                        return ret;
+                    }
+
+                    auto pos = current_name.rfind(".");
+
+                    if (pos == std::string::npos) {
+                        current_name = "";
+                    } else {
+                        auto parent_level = current_name.substr(0, pos);
+                        current_name = parent_level;
+                    }
+                }
+            }
         }
     }
 #endif

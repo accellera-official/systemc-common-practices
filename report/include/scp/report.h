@@ -355,7 +355,7 @@ protected:
 #define SCP_WARN(...)                                             \
     if (::scp::get_log_verbosity(__VA_ARGS__) >= sc_core::SC_LOW) \
     ::scp::ScLogger<::sc_core::SC_WARNING>(__FILE__, __LINE__,    \
-                                           sc_core::SC_LOW)       \
+                                           sc_core::SC_MEDIUM)    \
         .type(__VA_ARGS__)                                        \
         .get()
 //! macro for error level output
