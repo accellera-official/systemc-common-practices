@@ -519,12 +519,12 @@ auto scp::get_log_verbosity(char const* str) -> sc_core::sc_verbosity {
             else
                 param_name = current_name + "." SCP_LOG_LEVEL_PARAM_NAME;
 
-            auto h = cci::cci_get_broker().get_param_handle<unsigned>(
+            auto h = cci::cci_get_broker().get_param_handle(
                 param_name);
 
             if (h.is_valid()) {
                 sc_core::sc_verbosity ret = verbosity.at(
-                    std::min<unsigned>(h.get_value(), verbosity.size() - 1));
+                    std::min<unsigned>(h.get_cci_value().get_int(), verbosity.size() - 1));
                 lut[k] = ret;
                 return ret;
             } else {
