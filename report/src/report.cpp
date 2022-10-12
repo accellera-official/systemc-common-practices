@@ -512,19 +512,16 @@ auto scp::get_log_verbosity(char const* str) -> sc_core::sc_verbosity {
     if (sc_core::sc_get_current_object()) {
         string current_name = std::string(str);
         while (true) {
-            string param_name;
+            string param_name = (current_name.empty())
+                                    ? SCP_LOG_LEVEL_PARAM_NAME
+                                    : current_name +
+                                          "." SCP_LOG_LEVEL_PARAM_NAME;
 
-            if (current_name.empty())
-                param_name = SCP_LOG_LEVEL_PARAM_NAME;
-            else
-                param_name = current_name + "." SCP_LOG_LEVEL_PARAM_NAME;
-
-            auto h = cci::cci_get_broker().get_param_handle(
-                param_name);
+            auto h = cci::cci_get_broker().get_param_handle(param_name);
 
             if (h.is_valid()) {
-                sc_core::sc_verbosity ret = verbosity.at(
-                    std::min<unsigned>(h.get_cci_value().get_int(), verbosity.size() - 1));
+                sc_core::sc_verbosity ret = verbosity.at(std::min<unsigned>(
+                    h.get_cci_value().get_int(), verbosity.size() - 1));
                 lut[k] = ret;
                 return ret;
             } else {
@@ -551,8 +548,7 @@ auto scp::get_log_verbosity(char const* str) -> sc_core::sc_verbosity {
                     if (pos == std::string::npos) {
                         current_name = "";
                     } else {
-                        auto parent_level = current_name.substr(0, pos);
-                        current_name = parent_level;
+                        current_name = current_name.substr(0, pos);
                     }
                 }
             }
