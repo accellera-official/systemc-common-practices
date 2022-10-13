@@ -53,7 +53,13 @@ using namespace sc_core;
 using namespace scp;
 
 namespace {
+// Making this thread_local could cause thread copies of the same cache
+// entries, but more likely naming will be thread local too, and this avoids
+// races in the unordered_map
 thread_local std::unordered_map<uint64_t, sc_core::sc_verbosity> lut;
+#ifdef HAS_CCI
+cci::cci_originator scp_global_originator("scp_reporting_global");
+#endif
 
 struct ExtLogConfig : public scp::LogConfig {
     shared_ptr<spdlog::logger> file_logger;
@@ -67,7 +73,7 @@ struct ExtLogConfig : public scp::LogConfig {
     auto match(const char* type) -> bool { return regex_search(type, reg_ex); }
 };
 
-thread_local ExtLogConfig log_cfg;
+ExtLogConfig log_cfg;
 
 inline std::string padded(std::string str, size_t width,
                           bool show_ellipsis = true) {
@@ -509,35 +515,49 @@ auto scp::get_log_verbosity(char const* str) -> sc_core::sc_verbosity {
     auto it = lut.find(k);
     if (it != lut.end())
         return it->second;
-    if (sc_core::sc_get_current_object()) {
-        string current_name = std::string(str);
-        while (true) {
-            string param_name = (current_name.empty())
-                                    ? SCP_LOG_LEVEL_PARAM_NAME
-                                    : current_name +
-                                          "." SCP_LOG_LEVEL_PARAM_NAME;
 
-            auto h = cci::cci_get_broker().get_param_handle(param_name);
+    try {
+        // this may throw is there is no global broker
+        auto broker = sc_core::sc_get_current_object()
+                          ? cci::cci_get_broker()
+                          : cci::cci_get_global_broker(scp_global_originator);
 
-            if (h.is_valid()) {
-                sc_core::sc_verbosity ret = verbosity.at(std::min<unsigned>(
-                    h.get_cci_value().get_int(), verbosity.size() - 1));
-                lut[k] = ret;
-                return ret;
-            } else {
-                auto val = cci::cci_get_broker().get_preset_cci_value(
-                    param_name);
-                auto global_verb = static_cast<sc_core::sc_verbosity>(
-                    ::sc_core::sc_report_handler::get_verbosity_level());
+        if (sc_core::sc_get_current_object()) {
+            string current_name = std::string(str);
+            while (true) {
+                string param_name = (current_name.empty())
+                                        ? SCP_LOG_LEVEL_PARAM_NAME
+                                        : current_name +
+                                              "." SCP_LOG_LEVEL_PARAM_NAME;
 
-                if (val.is_int()) {
+                auto h = broker.get_param_handle(param_name);
+                if (h.is_valid()) {
                     sc_core::sc_verbosity ret = verbosity.at(
-                        std::min<unsigned>(val.get_int(),
+                        std::min<unsigned>(h.get_cci_value().get_int(),
                                            verbosity.size() - 1));
                     lut[k] = ret;
                     return ret;
                 } else {
+                    auto val = broker.get_preset_cci_value(param_name);
+
+                    if (val.is_int()) {
+                        broker.ignore_unconsumed_preset_values(
+                            [param_name](
+                                const std::pair<std::string, cci::cci_value>&
+                                    iv) -> bool {
+                                return iv.first == param_name;
+                            });
+                        broker.lock_preset_value(param_name);
+                        sc_core::sc_verbosity ret = verbosity.at(
+                            std::min<unsigned>(val.get_int(),
+                                               verbosity.size() - 1));
+                        lut[k] = ret;
+                        return ret;
+                    }
                     if (current_name.empty()) {
+                        auto global_verb = static_cast<sc_core::sc_verbosity>(
+                            ::sc_core::sc_report_handler::
+                                get_verbosity_level());
                         sc_core::sc_verbosity ret = global_verb;
                         lut[k] = ret;
                         return ret;
@@ -553,6 +573,8 @@ auto scp::get_log_verbosity(char const* str) -> sc_core::sc_verbosity {
                 }
             }
         }
+    } catch (const std::exception&) {
+        // If there is no global broker, revert to initialized verbosity level
     }
 #endif
     return static_cast<sc_core::sc_verbosity>(
