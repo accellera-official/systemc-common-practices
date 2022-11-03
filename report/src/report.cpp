@@ -73,7 +73,15 @@ struct ExtLogConfig : public scp::LogConfig {
     auto match(const char* type) -> bool { return regex_search(type, reg_ex); }
 };
 
+/* normally put the config in thread local. If two threads try to use logging
+ * they would both need to init the config from both threads. The alternative
+ * is to switch on this define, but then care has to be taken not to
+ * (re)initialize from different threads which would then be unsafe.*/
+#ifdef DISABLE_REPORT_THREAD_LOCAL
 ExtLogConfig log_cfg;
+#else
+thread_local ExtLogConfig log_cfg;
+#endif
 
 inline std::string padded(std::string str, size_t width,
                           bool show_ellipsis = true) {
