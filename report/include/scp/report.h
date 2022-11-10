@@ -141,6 +141,7 @@ struct LogConfig {
     std::string log_filter_regex{ "" };
     bool log_async{ true };
     bool report_only_first_error{ false };
+    int file_info_from{ sc_core::SC_INFO };
 
     //! set the logging level
     LogConfig& logLevel(log);
@@ -168,6 +169,7 @@ struct LogConfig {
     //! enable/disable asynchronous output (write to file in separate thread
     LogConfig& logAsync(bool = true);
     //! disable/enable the supression of all error messages after the first
+    LogConfig& fileInfoFrom(int);
     //! error
     LogConfig& reportOnlyFirstError(bool = true);
 };

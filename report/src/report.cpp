@@ -190,7 +190,7 @@ auto compose_message(const sc_report& rep, const scp::LogConfig& cfg)
         }
         if (*rep.get_msg())
             os << rep.get_msg();
-        if (rep.get_severity() > SC_INFO) {
+        if (rep.get_severity() >= cfg.file_info_from) {
             if (rep.get_line_number())
                 os << "\n         [FILE:" << rep.get_file_name() << ":"
                    << rep.get_line_number() << "]";
@@ -514,6 +514,11 @@ auto scp::LogConfig::logAsync(bool v) -> scp::LogConfig& {
 
 auto scp::LogConfig::reportOnlyFirstError(bool v) -> scp::LogConfig& {
     this->report_only_first_error = v;
+    return *this;
+}
+
+auto scp::LogConfig::fileInfoFrom(int v) -> scp::LogConfig& {
+    this->file_info_from = v;
     return *this;
 }
 
