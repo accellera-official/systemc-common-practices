@@ -56,7 +56,13 @@ namespace {
 // Making this thread_local could cause thread copies of the same cache
 // entries, but more likely naming will be thread local too, and this avoids
 // races in the unordered_map
+
+#ifdef DISABLE_REPORT_THREAD_LOCAL
+std::unordered_map<uint64_t, sc_core::sc_verbosity> lut;
+#else
 thread_local std::unordered_map<uint64_t, sc_core::sc_verbosity> lut;
+#endif
+
 #ifdef HAS_CCI
 cci::cci_originator scp_global_originator("scp_reporting_global");
 #endif
