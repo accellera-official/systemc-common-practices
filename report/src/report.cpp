@@ -541,54 +541,48 @@ auto scp::get_log_verbosity(char const* str) -> sc_core::sc_verbosity {
                           ? cci::cci_get_broker()
                           : cci::cci_get_global_broker(scp_global_originator);
 
-        if (sc_core::sc_get_current_object()) {
-            string current_name = std::string(str);
-            while (true) {
-                string param_name = (current_name.empty())
-                                        ? SCP_LOG_LEVEL_PARAM_NAME
-                                        : current_name +
-                                              "." SCP_LOG_LEVEL_PARAM_NAME;
+        string current_name = std::string(str);
+        while (true) {
+            string param_name = (current_name.empty())
+                                    ? SCP_LOG_LEVEL_PARAM_NAME
+                                    : current_name +
+                                          "." SCP_LOG_LEVEL_PARAM_NAME;
 
-                auto h = broker.get_param_handle(param_name);
-                if (h.is_valid()) {
+            auto h = broker.get_param_handle(param_name);
+            if (h.is_valid()) {
+                sc_core::sc_verbosity ret = verbosity.at(std::min<unsigned>(
+                    h.get_cci_value().get_int(), verbosity.size() - 1));
+                lut[k] = ret;
+                return ret;
+            } else {
+                auto val = broker.get_preset_cci_value(param_name);
+
+                if (val.is_int()) {
+                    broker.ignore_unconsumed_preset_values(
+                        [param_name](
+                            const std::pair<std::string, cci::cci_value>& iv)
+                            -> bool { return iv.first == param_name; });
+                    broker.lock_preset_value(param_name);
                     sc_core::sc_verbosity ret = verbosity.at(
-                        std::min<unsigned>(h.get_cci_value().get_int(),
+                        std::min<unsigned>(val.get_int(),
                                            verbosity.size() - 1));
                     lut[k] = ret;
                     return ret;
+                }
+                if (current_name.empty()) {
+                    auto global_verb = static_cast<sc_core::sc_verbosity>(
+                        ::sc_core::sc_report_handler::get_verbosity_level());
+                    sc_core::sc_verbosity ret = global_verb;
+                    lut[k] = ret;
+                    return ret;
+                }
+
+                auto pos = current_name.rfind(".");
+
+                if (pos == std::string::npos) {
+                    current_name = "";
                 } else {
-                    auto val = broker.get_preset_cci_value(param_name);
-
-                    if (val.is_int()) {
-                        broker.ignore_unconsumed_preset_values(
-                            [param_name](
-                                const std::pair<std::string, cci::cci_value>&
-                                    iv) -> bool {
-                                return iv.first == param_name;
-                            });
-                        broker.lock_preset_value(param_name);
-                        sc_core::sc_verbosity ret = verbosity.at(
-                            std::min<unsigned>(val.get_int(),
-                                               verbosity.size() - 1));
-                        lut[k] = ret;
-                        return ret;
-                    }
-                    if (current_name.empty()) {
-                        auto global_verb = static_cast<sc_core::sc_verbosity>(
-                            ::sc_core::sc_report_handler::
-                                get_verbosity_level());
-                        sc_core::sc_verbosity ret = global_verb;
-                        lut[k] = ret;
-                        return ret;
-                    }
-
-                    auto pos = current_name.rfind(".");
-
-                    if (pos == std::string::npos) {
-                        current_name = "";
-                    } else {
-                        current_name = current_name.substr(0, pos);
-                    }
+                    current_name = current_name.substr(0, pos);
                 }
             }
         }
