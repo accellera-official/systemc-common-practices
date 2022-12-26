@@ -320,8 +320,6 @@ void report_handler(const sc_report& rep, const sc_actions& actions) {
         log_cfg.console_logger->flush();
         if (log_cfg.file_logger)
             log_cfg.file_logger->flush();
-        this_thread::sleep_for(
-            chrono::milliseconds(static_cast<unsigned>(log_cfg.level) * 10));
     }
 }
 
