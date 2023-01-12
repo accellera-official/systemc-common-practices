@@ -27,6 +27,13 @@ cpmaddpackage(
   GIT_TAG 2.3.3
 )
 
+cpmaddpackage(
+  NAME SystemCCCI
+  GIT_REPOSITORY  ${GITHUB}accellera-official/cci.git
+  GIT_SHALLOW True
+  GIT_TAG master
+)
+
 FetchContent_Declare(
     spdlog_git
     GIT_REPOSITORY "https://github.com/gabime/spdlog.git"

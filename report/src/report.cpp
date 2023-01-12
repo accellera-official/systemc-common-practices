@@ -48,9 +48,6 @@
 #ifdef ERROR
 #undef ERROR
 #endif
-using namespace std;
-using namespace sc_core;
-using namespace scp;
 
 namespace {
 // Making this thread_local could cause thread copies of the same cache
@@ -68,10 +65,10 @@ cci::cci_originator scp_global_originator("scp_reporting_global");
 #endif
 
 struct ExtLogConfig : public scp::LogConfig {
-    shared_ptr<spdlog::logger> file_logger;
-    shared_ptr<spdlog::logger> console_logger;
-    regex reg_ex;
-    sc_time cycle_base{ 0, SC_NS };
+    std::shared_ptr<spdlog::logger> file_logger;
+    std::shared_ptr<spdlog::logger> console_logger;
+    std::regex reg_ex;
+    sc_core::sc_time cycle_base{ 0, sc_core::SC_NS };
     auto operator=(const scp::LogConfig& o) -> ExtLogConfig& {
         scp::LogConfig::operator=(o);
         return *this;
@@ -105,9 +102,10 @@ inline std::string padded(std::string str, size_t width,
     }
 }
 
-auto get_tuple(const sc_time& t) -> tuple<sc_time::value_type, sc_time_unit> {
+auto get_tuple(const sc_core::sc_time& t)
+    -> std::tuple<sc_core::sc_time::value_type, sc_core::sc_time_unit> {
     auto val = t.value();
-    auto tr = (uint64_t)(sc_time::from_value(1).to_seconds() * 1E15);
+    auto tr = (uint64_t)(sc_core::sc_time::from_value(1).to_seconds() * 1E15);
     auto scale = 0U;
     while ((tr % 10) == 0) {
         tr /= 10;
@@ -116,67 +114,72 @@ auto get_tuple(const sc_time& t) -> tuple<sc_time::value_type, sc_time_unit> {
     sc_assert(tr == 1);
 
     auto tu = scale / 3;
-    while (tu < SC_SEC && (val % 10) == 0) {
+    while (tu < sc_core::SC_SEC && (val % 10) == 0) {
         val /= 10;
         scale++;
         tu += (0 == (scale % 3));
     }
     for (scale %= 3; scale != 0; scale--)
         val *= 10;
-    return make_tuple(val, static_cast<sc_time_unit>(tu));
+    return std::make_tuple(val, static_cast<sc_core::sc_time_unit>(tu));
 }
 
-auto time2string(const sc_time& t) -> string {
-    const array<const char*, 6> time_units{
-        "fs", "ps", "ns", "us", "ms", "s "
-    };
-    const array<uint64_t, 6> multiplier{ 1ULL,
-                                         1000ULL,
-                                         1000ULL * 1000,
-                                         1000ULL * 1000 * 1000,
-                                         1000ULL * 1000 * 1000 * 1000,
-                                         1000ULL * 1000 * 1000 * 1000 * 1000 };
-    ostringstream oss;
+auto time2string(const sc_core::sc_time& t) -> std::string {
+    const std::array<const char*, 6> time_units{ "fs", "ps", "ns",
+                                                 "us", "ms", "s " };
+    const std::array<uint64_t, 6> multiplier{ 1ULL,
+                                              1000ULL,
+                                              1000ULL * 1000,
+                                              1000ULL * 1000 * 1000,
+                                              1000ULL * 1000 * 1000 * 1000,
+                                              1000ULL * 1000 * 1000 * 1000 *
+                                                  1000 };
+    std::ostringstream oss;
     if (!t.value()) {
         oss << "0 s ";
     } else {
         const auto tt = get_tuple(t);
-        const auto val = get<0>(tt);
-        const auto scale = get<1>(tt);
+        const auto val = std::get<0>(tt);
+        const auto scale = std::get<1>(tt);
         const auto fs_val = val * multiplier[scale];
         for (int j = multiplier.size() - 1; j >= scale; --j) {
             if (fs_val >= multiplier[j]) {
                 const auto i = val / multiplier[j - scale];
                 const auto f = val % multiplier[j - scale];
-                oss << i << '.' << setw(3 * (j - scale)) << setfill('0')
-                    << right << f << ' ' << time_units[j];
+                oss << i << '.' << std::setw(3 * (j - scale))
+                    << std::setfill('0') << std::right << f << ' '
+                    << time_units[j];
                 break;
             }
         }
     }
     return oss.str();
 }
-auto compose_message(const sc_report& rep, const scp::LogConfig& cfg)
-    -> const string {
-    if (rep.get_severity() > SC_INFO || cfg.log_filter_regex.length() == 0 ||
+auto compose_message(const sc_core::sc_report& rep, const scp::LogConfig& cfg)
+    -> const std::string {
+    if (rep.get_severity() > sc_core::SC_INFO ||
+        cfg.log_filter_regex.length() == 0 ||
         rep.get_verbosity() == sc_core::SC_MEDIUM ||
         log_cfg.match(rep.get_msg_type())) {
-        stringstream os;
+        std::stringstream os;
         if (likely(cfg.print_sim_time)) {
             if (unlikely(log_cfg.cycle_base.value())) {
                 if (unlikely(cfg.print_delta))
                     os << "[" << std::setw(7) << std::setfill(' ')
-                       << sc_time_stamp().value() / log_cfg.cycle_base.value()
-                       << "(" << setw(5) << sc_delta_count() << ")]";
+                       << sc_core::sc_time_stamp().value() /
+                              log_cfg.cycle_base.value()
+                       << "(" << std::setw(5) << sc_core::sc_delta_count()
+                       << ")]";
                 else
                     os << "[" << std::setw(7) << std::setfill(' ')
-                       << sc_time_stamp().value() / log_cfg.cycle_base.value()
+                       << sc_core::sc_time_stamp().value() /
+                              log_cfg.cycle_base.value()
                        << "]";
             } else {
-                auto t = time2string(sc_time_stamp());
+                auto t = time2string(sc_core::sc_time_stamp());
                 if (unlikely(cfg.print_delta))
                     os << "[" << std::setw(20) << std::setfill(' ') << t << "("
-                       << setw(5) << sc_delta_count() << ")]";
+                       << std::setw(5) << sc_core::sc_delta_count() << ")]";
                 else
                     os << "[" << std::setw(20) << std::setfill(' ') << t
                        << "]";
@@ -200,8 +203,8 @@ auto compose_message(const sc_report& rep, const scp::LogConfig& cfg)
             if (rep.get_line_number())
                 os << "\n         [FILE:" << rep.get_file_name() << ":"
                    << rep.get_line_number() << "]";
-            sc_simcontext* simc = sc_get_curr_simcontext();
-            if (simc && sc_is_running()) {
+            sc_core::sc_simcontext* simc = sc_core::sc_get_curr_simcontext();
+            if (simc && sc_core::sc_is_running()) {
                 const char* proc_name = rep.get_process_name();
                 if (proc_name)
                     os << "\n         [PROCESS:" << proc_name << "]";
@@ -212,26 +215,26 @@ auto compose_message(const sc_report& rep, const scp::LogConfig& cfg)
         return "";
 }
 
-inline auto get_verbosity(const sc_report& rep) -> int {
+inline auto get_verbosity(const sc_core::sc_report& rep) -> int {
     return rep.get_verbosity() > sc_core::SC_NONE &&
                    rep.get_verbosity() < sc_core::SC_LOW
                ? rep.get_verbosity() * 10
                : rep.get_verbosity();
 }
 
-inline void log2logger(spdlog::logger& logger, const sc_report& rep,
+inline void log2logger(spdlog::logger& logger, const sc_core::sc_report& rep,
                        const scp::LogConfig& cfg) {
     auto msg = compose_message(rep, cfg);
     if (!msg.size())
         return;
     switch (rep.get_severity()) {
-    case SC_INFO:
+    case sc_core::SC_INFO:
         switch (get_verbosity(rep)) {
-        case SC_DEBUG:
-        case SC_FULL:
+        case sc_core::SC_DEBUG:
+        case sc_core::SC_FULL:
             logger.trace(msg);
             break;
-        case SC_HIGH:
+        case sc_core::SC_HIGH:
             logger.debug(msg);
             break;
         default:
@@ -239,13 +242,13 @@ inline void log2logger(spdlog::logger& logger, const sc_report& rep,
             break;
         }
         break;
-    case SC_WARNING:
+    case sc_core::SC_WARNING:
         logger.warn(msg);
         break;
-    case SC_ERROR:
+    case sc_core::SC_ERROR:
         logger.error(msg);
         break;
-    case SC_FATAL:
+    case sc_core::SC_FATAL:
         logger.critical(msg);
         break;
     default:
@@ -254,7 +257,7 @@ inline void log2logger(spdlog::logger& logger, const sc_report& rep,
 }
 
 inline void log2logger(spdlog::logger& logger, scp::log lvl,
-                       const string& msg) {
+                       const std::string& msg) {
     switch (lvl) {
     case scp::log::DBGTRACE:
     case scp::log::TRACE:
@@ -280,17 +283,18 @@ inline void log2logger(spdlog::logger& logger, scp::log lvl,
     }
 }
 
-void report_handler(const sc_report& rep, const sc_actions& actions) {
+void report_handler(const sc_core::sc_report& rep,
+                    const sc_core::sc_actions& actions) {
     thread_local bool sc_stop_called = false;
-    if (actions & SC_DO_NOTHING)
+    if (actions & sc_core::SC_DO_NOTHING)
         return;
     if (rep.get_severity() == sc_core::SC_INFO ||
         !log_cfg.report_only_first_error ||
-        sc_report_handler::get_count(SC_ERROR) < 2) {
-        if ((actions & SC_DISPLAY) &&
-            (!log_cfg.file_logger || get_verbosity(rep) < SC_HIGH))
+        sc_core::sc_report_handler::get_count(sc_core::SC_ERROR) < 2) {
+        if ((actions & sc_core::SC_DISPLAY) &&
+            (!log_cfg.file_logger || get_verbosity(rep) < sc_core::SC_HIGH))
             log2logger(*log_cfg.console_logger, rep, log_cfg);
-        if ((actions & SC_LOG) && log_cfg.file_logger) {
+        if ((actions & sc_core::SC_LOG) && log_cfg.file_logger) {
             scp::LogConfig lcfg(log_cfg);
             lcfg.print_sim_time = true;
             if (!lcfg.msg_type_field_width)
@@ -298,25 +302,25 @@ void report_handler(const sc_report& rep, const sc_actions& actions) {
             log2logger(*log_cfg.file_logger, rep, lcfg);
         }
     }
-    if (actions & SC_STOP) {
-        this_thread::sleep_for(
-            chrono::milliseconds(static_cast<unsigned>(log_cfg.level) * 10));
-        if (sc_is_running() && !sc_stop_called) {
-            sc_stop();
+    if (actions & sc_core::SC_STOP) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(
+            static_cast<unsigned>(log_cfg.level) * 10));
+        if (sc_core::sc_is_running() && !sc_stop_called) {
+            sc_core::sc_stop();
             sc_stop_called = true;
         }
     }
-    if (actions & SC_ABORT) {
-        this_thread::sleep_for(
-            chrono::milliseconds(static_cast<unsigned>(log_cfg.level) * 20));
+    if (actions & sc_core::SC_ABORT) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(
+            static_cast<unsigned>(log_cfg.level) * 20));
         abort();
     }
-    if (actions & SC_THROW) {
-        this_thread::sleep_for(
-            chrono::milliseconds(static_cast<unsigned>(log_cfg.level) * 20));
+    if (actions & sc_core::SC_THROW) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(
+            static_cast<unsigned>(log_cfg.level) * 20));
         throw rep;
     }
-    if (sc_time_stamp().value() && !sc_is_running()) {
+    if (sc_core::sc_time_stamp().value() && !sc_core::sc_is_running()) {
         log_cfg.console_logger->flush();
         if (log_cfg.file_logger)
             log_cfg.file_logger->flush();
@@ -335,38 +339,19 @@ auto char_hash(char const* str) -> uint64_t {
 }
 } // namespace
 
-static const array<sc_severity, 8> severity = {
-    SC_FATAL,   // scp::log::NONE
-    SC_FATAL,   // scp::log::FATAL
-    SC_ERROR,   // scp::log::ERROR
-    SC_WARNING, // scp::log::WARNING
-    SC_INFO,    // scp::log::INFO
-    SC_INFO,    // scp::log::DEBUG
-    SC_INFO,    // scp::log::TRACE
-    SC_INFO     // scp::log::TRACEALL
-};
-static const array<sc_verbosity, 8> verbosity = {
-    SC_NONE,   // scp::log::NONE
-    SC_LOW,    // scp::log::FATAL
-    SC_LOW,    // scp::log::ERROR
-    SC_LOW,    // scp::log::WARNING
-    SC_MEDIUM, // scp::log::INFO
-    SC_HIGH,   // scp::log::DEBUG
-    SC_FULL,   // scp::log::TRACE
-    SC_DEBUG   // scp::log::TRACEALL
-};
-
 static std::mutex cfg_guard;
 static void configure_logging() {
-    std::lock_guard<mutex> lock(cfg_guard);
+    std::lock_guard<std::mutex> lock(cfg_guard);
     static bool spdlog_initialized = false;
 
-    sc_report_handler::set_actions(SC_ERROR,
-                                   SC_DEFAULT_ERROR_ACTIONS | SC_DISPLAY);
-    sc_report_handler::set_actions(SC_FATAL, SC_DEFAULT_FATAL_ACTIONS);
-    sc_report_handler::set_verbosity_level(
-        verbosity[static_cast<unsigned>(log_cfg.level)]);
-    sc_report_handler::set_handler(report_handler);
+    sc_core::sc_report_handler::set_actions(
+        sc_core::SC_ERROR,
+        sc_core::SC_DEFAULT_ERROR_ACTIONS | sc_core::SC_DISPLAY);
+    sc_core::sc_report_handler::set_actions(sc_core::SC_FATAL,
+                                            sc_core::SC_DEFAULT_FATAL_ACTIONS);
+    sc_core::sc_report_handler::set_verbosity_level(
+        scp::verbosity[static_cast<unsigned>(log_cfg.level)]);
+    sc_core::sc_report_handler::set_handler(report_handler);
     if (!spdlog_initialized) {
         spdlog::init_thread_pool(
             1024U,
@@ -390,8 +375,9 @@ static void configure_logging() {
         log_cfg.console_logger->set_level(spdlog::level::level_enum::trace);
         if (log_cfg.log_file_name.size()) {
             {
-                ofstream ofs;
-                ofs.open(log_cfg.log_file_name, ios::out | ios::trunc);
+                std::ofstream ofs;
+                ofs.open(log_cfg.log_file_name,
+                         std::ios::out | std::ios::trunc);
             }
             log_cfg.file_logger = log_cfg.log_async
                                       ? spdlog::basic_logger_mt<
@@ -415,13 +401,13 @@ static void configure_logging() {
             log_cfg.file_logger = spdlog::get("file_logger");
     }
     if (log_cfg.log_filter_regex.size()) {
-        log_cfg.reg_ex = regex(log_cfg.log_filter_regex,
-                               regex::extended | regex::icase);
+        log_cfg.reg_ex = std::regex(log_cfg.log_filter_regex,
+                                    std::regex::extended | std::regex::icase);
     }
 }
 
 void scp::reinit_logging(scp::log level) {
-    sc_report_handler::set_handler(report_handler);
+    sc_core::sc_report_handler::set_handler(report_handler);
     log_cfg.level = level;
     lut.clear();
 }
@@ -441,18 +427,18 @@ void scp::init_logging(const scp::LogConfig& log_config) {
 
 void scp::set_logging_level(scp::log level) {
     log_cfg.level = level;
-    sc_report_handler::set_verbosity_level(
+    sc_core::sc_report_handler::set_verbosity_level(
         verbosity[static_cast<unsigned>(level)]);
     log_cfg.console_logger->set_level(static_cast<spdlog::level::level_enum>(
         SPDLOG_LEVEL_OFF -
-        min<int>(SPDLOG_LEVEL_OFF, static_cast<int>(log_cfg.level))));
+        std::min<int>(SPDLOG_LEVEL_OFF, static_cast<int>(log_cfg.level))));
 }
 
 auto scp::get_logging_level() -> scp::log {
     return log_cfg.level;
 }
 
-void scp::set_cycle_base(sc_time period) {
+void scp::set_cycle_base(sc_core::sc_time period) {
     log_cfg.cycle_base = period;
 }
 
@@ -486,12 +472,12 @@ auto scp::LogConfig::printSeverity(bool enable) -> scp::LogConfig& {
     return *this;
 }
 
-auto scp::LogConfig::logFileName(string&& name) -> scp::LogConfig& {
+auto scp::LogConfig::logFileName(std::string&& name) -> scp::LogConfig& {
     this->log_file_name = name;
     return *this;
 }
 
-auto scp::LogConfig::logFileName(const string& name) -> scp::LogConfig& {
+auto scp::LogConfig::logFileName(const std::string& name) -> scp::LogConfig& {
     this->log_file_name = name;
     return *this;
 }
@@ -501,12 +487,13 @@ auto scp::LogConfig::coloredOutput(bool enable) -> scp::LogConfig& {
     return *this;
 }
 
-auto scp::LogConfig::logFilterRegex(string&& expr) -> scp::LogConfig& {
+auto scp::LogConfig::logFilterRegex(std::string&& expr) -> scp::LogConfig& {
     this->log_filter_regex = expr;
     return *this;
 }
 
-auto scp::LogConfig::logFilterRegex(const string& expr) -> scp::LogConfig& {
+auto scp::LogConfig::logFilterRegex(const std::string& expr)
+    -> scp::LogConfig& {
     this->log_filter_regex = expr;
     return *this;
 }
@@ -526,68 +513,136 @@ auto scp::LogConfig::fileInfoFrom(int v) -> scp::LogConfig& {
     return *this;
 }
 
-auto scp::get_log_verbosity(char const* str) -> sc_core::sc_verbosity {
-#ifdef HAS_CCI
-    auto k = char_hash(str);
-    auto it = lut.find(k);
-    if (it != lut.end())
-        return it->second;
+std::vector<std::string> split(const std::string& s) {
+    std::vector<std::string> result;
+    std::istringstream iss(s);
+    std::string item;
+    while (std::getline(iss, item, '.')) {
+        result.push_back(item);
+    }
+    return result;
+}
 
+std::string join(std::vector<std::string> vec) {
+    if (vec.empty())
+        return "";
+    return std::accumulate(
+        vec.begin(), vec.end(), std::string(),
+        [](const std::string& a, const std::string& b) -> std::string {
+            return a + (a.length() > 0 ? "." : "") + b;
+        });
+}
+
+sc_core::sc_verbosity cci_lookup(cci::cci_broker_handle broker,
+                                 std::string name) {
+    auto param_name = (name.empty()) ? SCP_LOG_LEVEL_PARAM_NAME
+                                     : name + "." SCP_LOG_LEVEL_PARAM_NAME;
+    auto h = broker.get_param_handle(param_name);
+    if (h.is_valid()) {
+        return scp::verbosity.at(std::min<unsigned>(
+            h.get_cci_value().get_int(), scp::verbosity.size() - 1));
+    } else {
+        auto val = broker.get_preset_cci_value(param_name);
+
+        if (val.is_int()) {
+            broker.ignore_unconsumed_preset_values(
+                [param_name](const std::pair<std::string, cci::cci_value>& iv)
+                    -> bool { return iv.first == param_name; });
+            broker.lock_preset_value(param_name);
+
+            return scp::verbosity.at(
+                std::min<unsigned>(val.get_int(), scp::verbosity.size() - 1));
+        }
+    }
+    return sc_core::SC_UNSET;
+}
+
+#ifdef __GNUG__
+std::string demangle(const char* name) {
+    int status = -4; // some arbitrary value to eliminate the compiler
+                     // warning
+
+    // enable c++11 by passing the flag -std=c++11 to g++
+    std::unique_ptr<char, void (*)(void*)> res{
+        abi::__cxa_demangle(name, NULL, NULL, &status), std::free
+    };
+
+    return (status == 0) ? res.get() : name;
+}
+#else
+// does nothing if not GNUG
+std::string demangle(const char* name) {
+    return name;
+}
+#endif
+
+sc_core::sc_verbosity scp::scp_logger_cache::get_log_verbosity_cached(
+    const char* scname, const char* tname = "") {
+    if (level != sc_core::SC_UNSET) {
+        return level;
+    }
+
+    type = std::string(scname);
+
+#ifdef HAS_CCI
     try {
-        // this may throw is there is no global broker
+        // we rely on there being a broker, allow this to throw if not
         auto broker = sc_core::sc_get_current_object()
                           ? cci::cci_get_broker()
                           : cci::cci_get_global_broker(scp_global_originator);
 
-        string current_name = std::string(str);
-        while (true) {
-            string param_name = (current_name.empty())
-                                    ? SCP_LOG_LEVEL_PARAM_NAME
-                                    : current_name +
-                                          "." SCP_LOG_LEVEL_PARAM_NAME;
+        std::vector<std::string> allfeatures;
 
-            auto h = broker.get_param_handle(param_name);
-            if (h.is_valid()) {
-                sc_core::sc_verbosity ret = verbosity.at(std::min<unsigned>(
-                    h.get_cci_value().get_int(), verbosity.size() - 1));
-                lut[k] = ret;
-                return ret;
-            } else {
-                auto val = broker.get_preset_cci_value(param_name);
+        /* initialize */
+        for (auto scn = split(scname); scn.size(); scn.pop_back()) {
+            for (int first = 0; first < scn.size(); first++) {
+                auto f = scn.begin() + first;
+                std::vector<std::string> p(f, scn.end());
+                auto scn_str = ((first > 0) ? "*." : "") + join(p);
 
-                if (val.is_int()) {
-                    broker.ignore_unconsumed_preset_values(
-                        [param_name](
-                            const std::pair<std::string, cci::cci_value>& iv)
-                            -> bool { return iv.first == param_name; });
-                    broker.lock_preset_value(param_name);
-                    sc_core::sc_verbosity ret = verbosity.at(
-                        std::min<unsigned>(val.get_int(),
-                                           verbosity.size() - 1));
-                    lut[k] = ret;
-                    return ret;
+                allfeatures.push_back(scn_str);
+                for (auto ft : features) {
+                    for (auto ftn = split(ft); ftn.size(); ftn.pop_back()) {
+                        allfeatures.push_back(scn_str + "." + join(ftn));
+                    }
                 }
-                if (current_name.empty()) {
-                    auto global_verb = static_cast<sc_core::sc_verbosity>(
-                        ::sc_core::sc_report_handler::get_verbosity_level());
-                    sc_core::sc_verbosity ret = global_verb;
-                    lut[k] = ret;
-                    return ret;
-                }
+                allfeatures.push_back(scn_str + "." + demangle(tname));
+            }
+        }
+        for (auto ft : features) {
+            for (auto ftn = split(ft); ftn.size(); ftn.pop_back()) {
+                allfeatures.push_back(join(ftn));
+                allfeatures.push_back("*." + join(ftn));
+            }
+        }
+        allfeatures.push_back(demangle(tname));
+        allfeatures.push_back("*");
+        allfeatures.push_back("");
 
-                auto pos = current_name.rfind(".");
-
-                if (pos == std::string::npos) {
-                    current_name = "";
-                } else {
-                    current_name = current_name.substr(0, pos);
-                }
+        for (std::string f : allfeatures) {
+            sc_core::sc_verbosity v = cci_lookup(broker, f);
+            if (v != sc_core::SC_UNSET) {
+                level = v;
+                return v;
             }
         }
     } catch (const std::exception&) {
         // If there is no global broker, revert to initialized verbosity level
     }
+
 #endif
-    return static_cast<sc_core::sc_verbosity>(
-        ::sc_core::sc_report_handler::get_verbosity_level());
+
+    return level = static_cast<sc_core::sc_verbosity>(
+               ::sc_core::sc_report_handler::get_verbosity_level());
+}
+
+auto scp::get_log_verbosity(char const* str) -> sc_core::sc_verbosity {
+    auto k = char_hash(str);
+    auto it = lut.find(k);
+    if (it != lut.end())
+        return it->second;
+
+    scp::scp_logger_cache tmp;
+    lut[k] = tmp.get_log_verbosity_cached(str);
+    return lut[k];
 }
