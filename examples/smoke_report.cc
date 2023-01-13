@@ -25,6 +25,7 @@
 #include <string>
 #include <fstream>
 #include <streambuf>
+#include <unistd.h>
 
 SC_MODULE (test4) {
     SC_CTOR (test4) {
@@ -104,7 +105,7 @@ SC_MODULE (test) {
         }
 
         SCP_INFO() << "Uncached version empty";
-        SCP_INFO(()) << "Cached version default";
+        SCP_INFO(())("Cached version default");
         SCP_INFO(SCMOD) << "UnCached version feature using SCMOD macro";
         SCP_INFO((m_my_logger)) << "Cached version using (m_my_logger)";
         SCP_INFO((D)) << "Cached version with D";

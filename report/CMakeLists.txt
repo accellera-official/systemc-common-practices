@@ -34,6 +34,14 @@ cpmaddpackage(
   GIT_TAG master
 )
 
+cpmaddpackage(
+  NAME fmt
+  GIT_REPOSITORY  ${GITHUB}fmtlib/fmt.git
+  GIT_SHALLOW True
+  GIT_TAG 9.1.0
+  OPTIONS FMT_INSTALL "" ON
+)
+
 FetchContent_Declare(
     spdlog_git
     GIT_REPOSITORY "https://github.com/gabime/spdlog.git"
@@ -54,6 +62,10 @@ target_include_directories(
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+
+if(TARGET fmt)
+  target_link_libraries(${PROJECT_NAME} PUBLIC fmt::fmt)
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${spdlog_git_SRC_DIR}/include)
 if(TARGET SystemC::cci)

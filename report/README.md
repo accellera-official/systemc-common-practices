@@ -22,10 +22,12 @@ The Log levels used by the scp library are as follows :
 
 ## SCP_ report macros
 
-The following SCP_ report macros builds a stream, such that normal stream operators can be used for output.
+The following SCP_ report macros can process an [{FMT}](https://github.com/fmtlib/fmt) formatter, or operate as a normal stream (accepting normal operators for output).
 ```C
     SCP_TRACE() << "My trace message";
+    SCP_TRACE()("The answer is {}.", 42);
 ```
+
 The macros can take the following options:
 
 ```C

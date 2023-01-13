@@ -36,8 +36,8 @@
 #include <sysc/kernel/sc_time.h>
 #include <sysc/utils/sc_report.h>
 
-#ifdef HAS_CCI
-#include <cci_configuration>
+#ifdef FMT_SHARED
+#include <fmt/format.h>
 #endif
 
 #if defined(_MSC_VER) && defined(ERROR)
@@ -51,6 +51,10 @@ const sc_core::sc_verbosity SC_UNSET = (sc_core::sc_verbosity)INT_MAX;
 //! the name of the CCI property to attach to modules to control logging of
 //! this module
 #define SCP_LOG_LEVEL_PARAM_NAME "log_level"
+
+// must be global for macro to work.
+static const char* _SCP_FMT_EMPTY_STR = "";
+
 /** \ingroup scp-report
  *  @{
  */
@@ -73,27 +77,6 @@ enum class log {
     TRACE,
     TRACEALL,
     DBGTRACE = TRACEALL
-};
-
-static const std::array<sc_core::sc_severity, 8> severity = {
-    sc_core::SC_FATAL,   // scp::log::NONE
-    sc_core::SC_FATAL,   // scp::log::FATAL
-    sc_core::SC_ERROR,   // scp::log::ERROR
-    sc_core::SC_WARNING, // scp::log::WARNING
-    sc_core::SC_INFO,    // scp::log::INFO
-    sc_core::SC_INFO,    // scp::log::DEBUG
-    sc_core::SC_INFO,    // scp::log::TRACE
-    sc_core::SC_INFO     // scp::log::TRACEALL
-};
-static const std::array<sc_core::sc_verbosity, 8> verbosity = {
-    sc_core::SC_NONE,   // scp::log::NONE
-    sc_core::SC_LOW,    // scp::log::FATAL
-    sc_core::SC_LOW,    // scp::log::ERROR
-    sc_core::SC_LOW,    // scp::log::WARNING
-    sc_core::SC_MEDIUM, // scp::log::INFO
-    sc_core::SC_HIGH,   // scp::log::DEBUG
-    sc_core::SC_FULL,   // scp::log::TRACE
-    sc_core::SC_DEBUG   // scp::log::TRACEALL
 };
 
 /**
@@ -462,10 +445,17 @@ protected:
     (CAT(SCP_LOGCACHENAME, EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__))).type, \
      __VA_ARGS__)
 
+#ifdef FMT_SHARED
+#define _SCP_FMT_EMPTY_STR(x) fmt::format(x)
+#else
+#define _SCP_FMT_EMPTY_STR(x) ""
+#endif
+
 #define SCP_LOG(lvl, ...)                                             \
     ::scp::ScLogger<::sc_core::SC_INFO>(__FILE__, __LINE__, lvl / 10) \
-        .type(SCP_GET_FEATURES(__VA_ARGS__))                          \
-        .get()
+            .type(SCP_GET_FEATURES(__VA_ARGS__))                      \
+            .get()                                                    \
+        << _SCP_FMT_EMPTY_STR
 /*** End HELPER Macros *******/
 
 //! macro for debug trace level output

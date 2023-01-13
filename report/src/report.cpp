@@ -339,6 +339,26 @@ auto char_hash(char const* str) -> uint64_t {
 }
 } // namespace
 
+static const std::array<sc_core::sc_severity, 8> severity = {
+    sc_core::SC_FATAL,   // scp::log::NONE
+    sc_core::SC_FATAL,   // scp::log::FATAL
+    sc_core::SC_ERROR,   // scp::log::ERROR
+    sc_core::SC_WARNING, // scp::log::WARNING
+    sc_core::SC_INFO,    // scp::log::INFO
+    sc_core::SC_INFO,    // scp::log::DEBUG
+    sc_core::SC_INFO,    // scp::log::TRACE
+    sc_core::SC_INFO     // scp::log::TRACEALL
+};
+static const std::array<sc_core::sc_verbosity, 8> verbosity = {
+    sc_core::SC_NONE,   // scp::log::NONE
+    sc_core::SC_LOW,    // scp::log::FATAL
+    sc_core::SC_LOW,    // scp::log::ERROR
+    sc_core::SC_LOW,    // scp::log::WARNING
+    sc_core::SC_MEDIUM, // scp::log::INFO
+    sc_core::SC_HIGH,   // scp::log::DEBUG
+    sc_core::SC_FULL,   // scp::log::TRACE
+    sc_core::SC_DEBUG   // scp::log::TRACEALL
+};
 static std::mutex cfg_guard;
 static void configure_logging() {
     std::lock_guard<std::mutex> lock(cfg_guard);
@@ -350,7 +370,7 @@ static void configure_logging() {
     sc_core::sc_report_handler::set_actions(sc_core::SC_FATAL,
                                             sc_core::SC_DEFAULT_FATAL_ACTIONS);
     sc_core::sc_report_handler::set_verbosity_level(
-        scp::verbosity[static_cast<unsigned>(log_cfg.level)]);
+        verbosity[static_cast<unsigned>(log_cfg.level)]);
     sc_core::sc_report_handler::set_handler(report_handler);
     if (!spdlog_initialized) {
         spdlog::init_thread_pool(
@@ -539,8 +559,8 @@ sc_core::sc_verbosity cci_lookup(cci::cci_broker_handle broker,
                                      : name + "." SCP_LOG_LEVEL_PARAM_NAME;
     auto h = broker.get_param_handle(param_name);
     if (h.is_valid()) {
-        return scp::verbosity.at(std::min<unsigned>(
-            h.get_cci_value().get_int(), scp::verbosity.size() - 1));
+        return verbosity.at(std::min<unsigned>(h.get_cci_value().get_int(),
+                                               verbosity.size() - 1));
     } else {
         auto val = broker.get_preset_cci_value(param_name);
 
@@ -550,8 +570,8 @@ sc_core::sc_verbosity cci_lookup(cci::cci_broker_handle broker,
                     -> bool { return iv.first == param_name; });
             broker.lock_preset_value(param_name);
 
-            return scp::verbosity.at(
-                std::min<unsigned>(val.get_int(), scp::verbosity.size() - 1));
+            return verbosity.at(
+                std::min<unsigned>(val.get_int(), verbosity.size() - 1));
         }
     }
     return sc_core::SC_UNSET;
