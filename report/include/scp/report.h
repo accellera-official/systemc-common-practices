@@ -402,22 +402,22 @@ protected:
 /********/
 
 /* default logger cache name */
-#define SCP_LOGCACHENAME _m_scp_log_level_cache_
+#define SCP_LOGGER_NAME(x) CAT(_m_scp_log_level_cache_, x)
 
 /* User interface macros */
 #define SCMOD this->name()
-#define SCP_LOGGER(...)                                                  \
-    scp::scp_logger_cache IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))(         \
-        CAT(SCP_LOGCACHENAME, EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__))), \
-        SCP_LOGCACHENAME) = { sc_core::SC_UNSET,                         \
-                              "",                                        \
-                              { IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))(   \
-                                  POP_ARG(__VA_ARGS__), ##__VA_ARGS__) } }
+#define SCP_LOGGER(...)                                                 \
+    scp::scp_logger_cache IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))(        \
+        SCP_LOGGER_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__))),      \
+        SCP_LOGGER_NAME()) = { sc_core::SC_UNSET,                       \
+                               "",                                      \
+                               { IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))( \
+                                   POP_ARG(__VA_ARGS__), ##__VA_ARGS__) } }
 
 #define SCP_LOGGER_VECTOR(NAME) \
-    std::vector<scp::scp_logger_cache> _m_scp_log_level_cache_##NAME
+    std::vector<scp::scp_logger_cache> SCP_LOGGER_NAME(NAME)
 #define SCP_LOGGER_VECTOR_PUSH_BACK(NAME, ...) \
-    _m_scp_log_level_cache_##NAME.push_back(   \
+    SCP_LOGGER_NAME(NAME).push_back(           \
         { sc_core::SC_UNSET, "", { __VA_ARGS__ } });
 
 // critical thing is that the initial if 'fails' as soon as possible - if it is
@@ -433,22 +433,24 @@ protected:
 #define SCP_VBSTY_CHECK_UNCACHED(lvl, ...) \
     (::scp::get_log_verbosity(__VA_ARGS__) >= lvl)
 
-#define SCP_VBSTY_CHECK(lvl, ...)                                          \
-    IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))                                  \
-    (SCP_VBSTY_CHECK_CACHED(                                               \
-         lvl, ##__VA_ARGS__,                                               \
-         CAT(SCP_LOGCACHENAME, EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__)))), \
+#define SCP_VBSTY_CHECK(lvl, ...)                                    \
+    IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))                            \
+    (SCP_VBSTY_CHECK_CACHED(                                         \
+         lvl, FIRST_ARG(__VA_ARGS__),                                \
+         SCP_LOGGER_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__)))), \
      SCP_VBSTY_CHECK_UNCACHED(lvl, ##__VA_ARGS__))
 
-#define SCP_GET_FEATURES(...)                                              \
-    IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))                                  \
-    (CAT(SCP_LOGCACHENAME, EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__))).type, \
+#define SCP_GET_FEATURES(...)                                               \
+    IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))                                   \
+    (FIRST_ARG EXPAND((POP_ARG(                                             \
+         __VA_ARGS__,                                                       \
+         SCP_LOGGER_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__))).type))), \
      __VA_ARGS__)
 
 #ifdef FMT_SHARED
-#define _SCP_FMT_EMPTY_STR(x) fmt::format(x)
+#define _SCP_FMT_EMPTY_STR(...) fmt::format(__VA_ARGS__)
 #else
-#define _SCP_FMT_EMPTY_STR(x) ""
+#define _SCP_FMT_EMPTY_STR(...) "Please add FMT library for FMT support."
 #endif
 
 #define SCP_LOG(lvl, ...)                                             \
@@ -479,20 +481,23 @@ protected:
     if (SCP_VBSTY_CHECK(sc_core::SC_LOW, ##__VA_ARGS__))       \
     ::scp::ScLogger<::sc_core::SC_WARNING>(__FILE__, __LINE__, \
                                            sc_core::SC_MEDIUM) \
-        .type(SCP_GET_FEATURES(__VA_ARGS__))                   \
-        .get()
+            .type(SCP_GET_FEATURES(__VA_ARGS__))               \
+            .get()                                             \
+        << _SCP_FMT_EMPTY_STR
 //! macro for error level output
 #define SCP_ERR(...)                                         \
     ::scp::ScLogger<::sc_core::SC_ERROR>(__FILE__, __LINE__, \
                                          sc_core::SC_MEDIUM) \
-        .type(SCP_GET_FEATURES(__VA_ARGS__))                 \
-        .get()
+            .type(SCP_GET_FEATURES(__VA_ARGS__))             \
+            .get()                                           \
+        << _SCP_FMT_EMPTY_STR
 //! macro for fatal message output
 #define SCP_FATAL(...)                                       \
     ::scp::ScLogger<::sc_core::SC_FATAL>(__FILE__, __LINE__, \
                                          sc_core::SC_MEDIUM) \
-        .type(SCP_GET_FEATURES(__VA_ARGS__))                 \
-        .get()
+            .type(SCP_GET_FEATURES(__VA_ARGS__))             \
+            .get()                                           \
+        << _SCP_FMT_EMPTY_STR
 
 #ifdef NDEBUG
 #define SCP_ASSERT(expr) ((void)0)

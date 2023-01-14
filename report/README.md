@@ -7,18 +7,18 @@ The library offers the following macros. These macros ensure that, in general, a
 
 The Log levels used by the scp library are as follows :
 
-| SCP log <br /> level value | SCP_ report macro | Log levels name | Equivelent sc_core |
-| --- | --- | --- | --- |
-| 0 |   NONE    |
-| 1 | SCP_FATAL()    | FATAL    | `sc_core::SC_FATAL` (Always printed)
-| 2 | SCP_ERROR()    | ERROR    | `sc_core::SC_ERROR` (Always printed)
-| 3 | SCP_WARNING()  | WARNING  | `sc_core::SC_WARNING`
-| 4 | SCP_INFO()     | INFO     | `sc_core::SC_MEDIUM`
-| 5 | SCP_DEBUG()    | DEBUG    | `sc_core::SC_HIGH`
-| 6 | SCP_TRACE()    | TRACE    | `sc_core::SC_FULL`
-| 7 | SCP_TRACEALL() | TRACEALL | `sc_core::SC_DEBUG`
-| 7 | SCP_TRACEALL() | DBGTRACE |
+| SCP log <br /> level value | SCP_ report macro | Log levels name | Print Level | Equivelent sc_core |
+| --- | --- | --- | --- | --- |
+| 0 |   NONE    |   | sc_core::SC_NONE |
+| 1 | SCP_FATAL()    | FATAL    | sc_core::SC_LOW   | `sc_core::SC_FATAL` (Always printed)
+| 1 | SCP_ERROR()    | ERROR    | sc_core::SC_LOW   | `sc_core::SC_ERROR` (Always printed)
+| 1 | SCP_WARNING()  | WARNING  | sc_core::SC_LOW   | `sc_core::SC_WARNING`
+| 4 | SCP_INFO()     | INFO     | sc_core::SC_MEDIUM| `sc_core::SC_MEDIUM`
+| 5 | SCP_DEBUG()    | DEBUG    | sc_core::SC_HIGH  | `sc_core::SC_HIGH`
+| 6 | SCP_TRACE()    | TRACE    | sc_core::SC_FULL  | `sc_core::SC_FULL`
+| 7 | SCP_TRACEALL() | TRACEAL  | sc_core::SC_DEBUG | `sc_core::SC_DEBUG`
 
+Hence WARNINGS will be printed if the log level is set above 1. Hence setting a log_level of 3 will print Fatal, Error and Warning messages only.
 
 ## SCP_ report macros
 
@@ -39,7 +39,7 @@ Uses the global default report level set up during initialization to determine w
 ```C
     SCP_TRACE("string")
 ```
-The string represents a `feature` that is being reported upon. The message will be tagged with the feature name, and the feature name will be printed allong with the message. The name will also be used to look up a `CCI` parameter with the extension `log_level`.
+The string represents a `feature` that is being reported upon. The message will be tagged with the feature name, and the feature name will be printed along with the message. The name will also be used to look up a `CCI` parameter with the extension `log_level`.
 Hence:
 ```C
    SCP_TRACE("top.mymodel")
@@ -62,12 +62,17 @@ This form of `SCP_TRACE` uses a global lookup table. This means there is a look-
 ```C
    SCP_TRACE((logger))  
 ```
-In this form, the `logger` is expected to be within scope of the macro, it should be instanciated using the `SCP_LOGGER` macro. It will be used to store the debug level at which printing should occure and feature information which will be shared by all users of the `logger`. An alternate form makes use of the default logger (see below) : `SCP_TRACE(())`.
+In this form, the `logger` is expected to be within scope of the macro, it should be instantiated using the `SCP_LOGGER` macro. It will be used to store the debug level at which printing should occur and feature information which will be shared by all users of the `logger`. An alternate form makes use of the default logger (see below) : `SCP_TRACE(())`.
+
+```C
+    SCP_TRACE((logger),"string")
+```
+Both forms can be used together, in which case the logging type used in the output will be the feature string, while the logger will be used to determine if the 
 
 ```C
    SCP_LOGGER()
 ```
-The `SCP_LOGGER` macro is used to instanciate a logger for use in an SCP_ report macro. It is expected to be used in a class definition and the logger is expected to be used within that class. It should be constructed with the 'features' of logging for which it will be used. There are several forms of the SCP_LOGGER macro. With no arguments, the macro will construct a logger with the default name in the current scope. It is an error to use the macro more than once with no arguments.
+The `SCP_LOGGER` macro is used to instantiate a logger for use in an SCP_ report macro. It is expected to be used in a class definition and the logger is expected to be used within that class. It should be constructed with the 'features' of logging for which it will be used. There are several forms of the SCP_LOGGER macro. With no arguments, the macro will construct a logger with the default name in the current scope. It is an error to use the macro more than once with no arguments.
 
 By default, the logger will be initiated with some default features on the first use of any SCP_ report macro. This MUST happen within the SystemC context (on the SystemC thread) - it is safest to use an `SC_TRACE` macro (for instance) in the sc_module constructor.
 
@@ -97,17 +102,23 @@ A logger can be initialized with a variable number of feature strings, each of w
 
 Hence a module of type `mymod`, instanced with hierarchical name `top.foo` with feature `a.b` will search in order for:
 
-|     |     |
+|  Priority   |     |
 | --- | --- |
-|  1  |`top.foo.log_level`        |
-|  2  |`top.foo.a.b.log_level`    |
-|  3  |`*.foo.log_level`          |
+|  4  |`top.foo.a.b.log_level`    |
+|  3  |`top.foo.a.log_level`      |
+|  2  |`top.foo.log_level`        |
 |  4  |`*.foo.a.b.log_level`      |
-|  5  |`a.b.log_level`            |
-|  6  |`*.b.log_level`            |
-|  7  |`mymod.log_level`          |
-|  8  |`*.log_level`              |
-|  9  |`log_level`                |
+|  3  |`*.foo.a.log_level`        |
+|  2  |`*.foo.log_level`          |
+|  3  |`top.a.b.log_level`        |
+|  2  |`top.a.log_level`          |
+|  1  |`top.log_level`            |
+|  2  |`a.b.log_level`            |
+|  2  |`*.b.log_level`            |
+|  1  |`mymod.log_level`          |
+|  1  |`*.log_level`              |
+|  0  |`log_level`                |
+
 
 
 
@@ -121,7 +132,7 @@ Hence a module of type `mymod`, instanced with hierarchical name `top.foo` with 
 ```C
     scp::LogConfig()
 ```
-    Confenience functions are provided on a configuration structure that return a modified structure, hence  for example:
+    Convenience functions are provided on a configuration structure that return a modified structure, hence  for example:
 ```C
     scp::init_logging(
         scp::LogConfig()
@@ -146,7 +157,7 @@ Hence a module of type `mymod`, instanced with hierarchical name `top.foo` with 
 | set the regular expression to filter the output  |  `logFilterRegex([const] std::string&)` |  |
 | enable/disable asynchronous output (write to file in separate thread  |  `logAsync(bool)` | true |
 | print the file name from this log level |  `fileInfoFrom(int)` | sc_core::SC_INFO (4) |
-| disable/enable the supression of all error messages after the first  |    `reportOnlyFirstError(bool)` | true |
+| disable/enable the suppression of all error messages after the first  |    `reportOnlyFirstError(bool)` | true |
 
 ## Thread safety
 
@@ -182,7 +193,7 @@ Sometimes it's important to use both a 'cached' approach, and to allow the cache
 ```C
     SCP_LOGGER_VECTOR(NAME)
 ```
-This instanciates a vector of loggers (with the base name `NAME`).
+This instantiates a vector of loggers (with the base name `NAME`).
 
 ```C
     SCP_LOGGER_VECTOR_PUSH_BACK(NAME, "features"... )

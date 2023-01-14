@@ -60,6 +60,7 @@ SC_MODULE (test2) {
 
 SC_MODULE (test1) {
     SC_CTOR (test1) : t2("t2") {
+            SCP_WARN((), "My.Name") << " T1 My.Name typed log";
             SCP_INFO(()) << " T1 Logger()";
             SCP_WARN(()) << " T1 Logger()";
 
@@ -71,7 +72,7 @@ SC_MODULE (test1) {
             SCP_INFO((vec[1])) << "Thing2?";
             SCP_WARN((vec[1])) << "Thing2?";
         }
-    SCP_LOGGER();
+    SCP_LOGGER("something", "else");
     SCP_LOGGER_VECTOR(vec);
     test2 t2;
 };
@@ -105,7 +106,7 @@ SC_MODULE (test) {
         }
 
         SCP_INFO() << "Uncached version empty";
-        SCP_INFO(())("Cached version default");
+        SCP_INFO(())("FMT String : Cached version default");
         SCP_INFO(SCMOD) << "UnCached version feature using SCMOD macro";
         SCP_INFO((m_my_logger)) << "Cached version using (m_my_logger)";
         SCP_INFO((D)) << "Cached version with D";
@@ -126,7 +127,7 @@ int sc_main(int argc, char** argv) {
     broker.set_preset_cci_value("*.t3_1.log_level", cci::cci_value(5), orig);
     broker.set_preset_cci_value("feature.log_level", cci::cci_value(5), orig);
 
-    broker.set_preset_cci_value("test4.log_level", cci::cci_value(5), orig);
+    broker.set_preset_cci_value("test4.log_level", cci::cci_value(4), orig);
     broker.set_preset_cci_value("thing1.log_level", cci::cci_value(5), orig);
 
     std::string logfile = "/tmp/scp_smoke_report_test." +
@@ -147,6 +148,12 @@ int sc_main(int argc, char** argv) {
     sc_core::sc_start();
     SCP_WARN() << "Ending simulation";
 
+#ifdef FMT_SHARED
+    std::string fmtstr = "FMT String : Cached version default";
+#else
+    std::string fmtstr = "Please add FMT library for FMT support.";
+#endif
+
     std::string expected =
         R"([    info] [                0 s ]SystemC             : Constructing design
 [   debug] [                0 s ]top                 : First part
@@ -155,7 +162,8 @@ int sc_main(int argc, char** argv) {
 [   debug] [                0 s ]top                 : Second part
 [    info] [                0 s ]ext test            : Success
 [    info] [                0 s ]SystemC             : Uncached version empty
-[    info] [                0 s ]top                 : Cached version default
+[    info] [                0 s ]top                 : )" +
+        fmtstr + R"(
 [    info] [                0 s ]top                 : UnCached version feature using SCMOD macro
 [    info] [                0 s ]top                 : Cached version using (m_my_logger)
 [    info] [                0 s ]top                 : Cached version with D
@@ -171,6 +179,7 @@ int sc_main(int argc, char** argv) {
 [    info] [                0 s ]t1.t2.t4            :  .   T4 Logger() 2
 [ warning] [                0 s ]t1.t2.t4            :  .   T4 Logger() 2
 [ warning] [                0 s ]t1.t2               :   T2 Logger()
+[ warning] [                0 s ]My.Name             :  T1 My.Name typed log
 [ warning] [                0 s ]t1                  :  T1 Logger()
 [    info] [                0 s ]t1                  : Thing1?
 [ warning] [                0 s ]t1                  : Thing1?

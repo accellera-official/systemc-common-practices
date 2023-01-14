@@ -596,6 +596,12 @@ std::string demangle(const char* name) {
 }
 #endif
 
+void insert(std::multimap<int, std::string, std::greater<int>>& map,
+            std::string s) {
+    int n = std::count(s.begin(), s.end(), '.');
+    map.insert(make_pair(n, s));
+}
+
 sc_core::sc_verbosity scp::scp_logger_cache::get_log_verbosity_cached(
     const char* scname, const char* tname = "") {
     if (level != sc_core::SC_UNSET) {
@@ -611,7 +617,7 @@ sc_core::sc_verbosity scp::scp_logger_cache::get_log_verbosity_cached(
                           ? cci::cci_get_broker()
                           : cci::cci_get_global_broker(scp_global_originator);
 
-        std::vector<std::string> allfeatures;
+        std::multimap<int, std::string, std::greater<int>> allfeatures;
 
         /* initialize */
         for (auto scn = split(scname); scn.size(); scn.pop_back()) {
@@ -620,27 +626,27 @@ sc_core::sc_verbosity scp::scp_logger_cache::get_log_verbosity_cached(
                 std::vector<std::string> p(f, scn.end());
                 auto scn_str = ((first > 0) ? "*." : "") + join(p);
 
-                allfeatures.push_back(scn_str);
                 for (auto ft : features) {
                     for (auto ftn = split(ft); ftn.size(); ftn.pop_back()) {
-                        allfeatures.push_back(scn_str + "." + join(ftn));
+                        insert(allfeatures, scn_str + "." + join(ftn));
                     }
                 }
-                allfeatures.push_back(scn_str + "." + demangle(tname));
+                insert(allfeatures, scn_str + "." + demangle(tname));
+                insert(allfeatures, scn_str);
             }
         }
         for (auto ft : features) {
             for (auto ftn = split(ft); ftn.size(); ftn.pop_back()) {
-                allfeatures.push_back(join(ftn));
-                allfeatures.push_back("*." + join(ftn));
+                insert(allfeatures, join(ftn));
+                insert(allfeatures, "*." + join(ftn));
             }
         }
-        allfeatures.push_back(demangle(tname));
-        allfeatures.push_back("*");
-        allfeatures.push_back("");
+        insert(allfeatures, demangle(tname));
+        insert(allfeatures, "*");
+        insert(allfeatures, "");
 
-        for (std::string f : allfeatures) {
-            sc_core::sc_verbosity v = cci_lookup(broker, f);
+        for (std::pair<int, std::string> f : allfeatures) {
+            sc_core::sc_verbosity v = cci_lookup(broker, f.second);
             if (v != sc_core::SC_UNSET) {
                 level = v;
                 return v;

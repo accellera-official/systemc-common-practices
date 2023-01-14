@@ -34,6 +34,8 @@ cpmaddpackage(
   GIT_TAG master
 )
 
+set(WITH_FMT "true" CACHE STRING "Include FMT library")
+if (WITH_FMT)
 cpmaddpackage(
   NAME fmt
   GIT_REPOSITORY  ${GITHUB}fmtlib/fmt.git
@@ -41,6 +43,7 @@ cpmaddpackage(
   GIT_TAG 9.1.0
   OPTIONS FMT_INSTALL "" ON
 )
+endif()
 
 FetchContent_Declare(
     spdlog_git
