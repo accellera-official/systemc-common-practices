@@ -283,6 +283,13 @@ sc_core::sc_verbosity get_log_verbosity(char const* t);
 inline sc_core::sc_verbosity get_log_verbosity(std::string const& t) {
     return get_log_verbosity(t.c_str());
 }
+
+/**
+ * @brief Return list of logging parameters that have been used
+ *
+ */
+std::vector<std::string> get_logging_parameters();
+
 /**
  * @struct ScLogger
  * @brief the logger class

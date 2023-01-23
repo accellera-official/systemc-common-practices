@@ -64,6 +64,8 @@ thread_local std::unordered_map<uint64_t, sc_core::sc_verbosity> lut;
 cci::cci_originator scp_global_originator("scp_reporting_global");
 #endif
 
+std::set<std::string> logging_parameters;
+
 struct ExtLogConfig : public scp::LogConfig {
     std::shared_ptr<spdlog::logger> file_logger;
     std::shared_ptr<spdlog::logger> console_logger;
@@ -553,6 +555,11 @@ std::string join(std::vector<std::string> vec) {
         });
 }
 
+std::vector<std::string> scp::get_logging_parameters() {
+    return std::vector<std::string>(logging_parameters.begin(),
+                                    logging_parameters.end());
+}
+
 sc_core::sc_verbosity cci_lookup(cci::cci_broker_handle broker,
                                  std::string name) {
     auto param_name = (name.empty()) ? SCP_LOG_LEVEL_PARAM_NAME
@@ -597,9 +604,13 @@ std::string demangle(const char* name) {
 #endif
 
 void insert(std::multimap<int, std::string, std::greater<int>>& map,
-            std::string s) {
+            std::string s, bool interesting) {
     int n = std::count(s.begin(), s.end(), '.');
     map.insert(make_pair(n, s));
+
+    if (interesting) {
+        logging_parameters.insert(s + "." SCP_LOG_LEVEL_PARAM_NAME);
+    }
 }
 
 sc_core::sc_verbosity scp::scp_logger_cache::get_log_verbosity_cached(
@@ -628,22 +639,24 @@ sc_core::sc_verbosity scp::scp_logger_cache::get_log_verbosity_cached(
 
                 for (auto ft : features) {
                     for (auto ftn = split(ft); ftn.size(); ftn.pop_back()) {
-                        insert(allfeatures, scn_str + "." + join(ftn));
+                        insert(allfeatures, scn_str + "." + join(ftn),
+                               first == 0);
                     }
                 }
-                insert(allfeatures, scn_str + "." + demangle(tname));
-                insert(allfeatures, scn_str);
+                insert(allfeatures, scn_str + "." + demangle(tname),
+                       first == 0);
+                insert(allfeatures, scn_str, first == 0);
             }
         }
         for (auto ft : features) {
             for (auto ftn = split(ft); ftn.size(); ftn.pop_back()) {
-                insert(allfeatures, join(ftn));
-                insert(allfeatures, "*." + join(ftn));
+                insert(allfeatures, join(ftn), true);
+                insert(allfeatures, "*." + join(ftn), false);
             }
         }
-        insert(allfeatures, demangle(tname));
-        insert(allfeatures, "*");
-        insert(allfeatures, "");
+        insert(allfeatures, demangle(tname), true);
+        insert(allfeatures, "*", false);
+        insert(allfeatures, "", false);
 
         for (std::pair<int, std::string> f : allfeatures) {
             sc_core::sc_verbosity v = cci_lookup(broker, f.second);

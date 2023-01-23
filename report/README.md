@@ -200,3 +200,10 @@ This instantiates a vector of loggers (with the base name `NAME`).
 ```
 This will push_back a new logger to the logger vector, initialized with the features listed.
 From this point on any of the SCP_ reporting macro's can be used with the form `SCP_INFO((NAME[i]))`
+
+## Utilities
+
+A utility function is provided to list all the logging parameters available in the system. This can be used for help messages for instance.
+```C
+    std::vector<std::string> get_logging_parameters();
+```
