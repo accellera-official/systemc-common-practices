@@ -427,15 +427,42 @@ protected:
     SCP_LOGGER_NAME(NAME).push_back(           \
         { sc_core::SC_UNSET, "", { __VA_ARGS__ } });
 
+class call_sc_name_fn
+{
+    template <class T>
+    static auto test(T* p) -> decltype(p->name(), std::true_type());
+    template <class T>
+    static auto test(...) -> decltype(std::false_type());
+
+    template <class T>
+    static constexpr bool has_method = decltype(test<T>(nullptr))::value;
+
+public:
+    // define a function IF the method exists
+    template <class TYPE>
+    auto operator()(TYPE* p) const
+        -> std::enable_if_t<has_method<TYPE>, const char*> {
+        return p->name();
+    }
+
+    // define a function IF NOT the method exists
+    template <class TYPE>
+    auto operator()(TYPE* p) const
+        -> std::enable_if_t<not has_method<TYPE>, const char*> {
+        return nullptr;
+    }
+};
+
 // critical thing is that the initial if 'fails' as soon as possible - if it is
 // going to pass, we have all the time we want, as we will be logging anyway
 // This HAS to be done as a macro, because the first argument may be a string
 // or a cache'd level
 
 /*** Helper macros for SCP_ report macros ****/
-#define SCP_VBSTY_CHECK_CACHED(lvl, features, cached, ...)     \
-    (cached.level >= lvl) && (cached.get_log_verbosity_cached( \
-                                  this->name(), typeid(*this).name()) >= lvl)
+#define SCP_VBSTY_CHECK_CACHED(lvl, features, cached, ...)             \
+    (cached.level >= lvl) &&                                           \
+        (cached.get_log_verbosity_cached(scp::call_sc_name_fn()(this), \
+                                         typeid(*this).name()) >= lvl)
 
 #define SCP_VBSTY_CHECK_UNCACHED(lvl, ...) \
     (::scp::get_log_verbosity(__VA_ARGS__) >= lvl)

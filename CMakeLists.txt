@@ -24,7 +24,7 @@ cpmaddpackage(
   NAME SystemCLanguage
   GIT_REPOSITORY  ${GITHUB}accellera-official/systemc.git
   GIT_SHALLOW True
-  GIT_TAG 2.3.3
+  GIT_TAG master
 )
 
 

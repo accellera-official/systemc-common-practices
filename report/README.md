@@ -4,6 +4,12 @@
 
 The library offers the following macros. These macros ensure that, in general, a single 'if' is used to guard against output, so they can be used liberally throughout model code.
 
+The library uses the Cmake Package Manager to fetch SystemC, CCI, RapidJSON, FMT Library, Spdlog.
+For SystemC and CCI by default we use the "Master" Branch. Use a package lock to set a specific version if you need to.
+
+see: https://github.com/cpm-cmake/CPM.cmake
+
+----
 
 The Log levels used by the scp library are as follows :
 

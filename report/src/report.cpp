@@ -619,6 +619,11 @@ sc_core::sc_verbosity scp::scp_logger_cache::get_log_verbosity_cached(
         return level;
     }
 
+    if (!scname && features.size())
+        scname = features[0].c_str();
+    if (!scname)
+        scname = "";
+
     type = std::string(scname);
 
 #ifdef HAS_CCI

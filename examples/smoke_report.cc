@@ -77,7 +77,19 @@ SC_MODULE (test1) {
     test2 t2;
 };
 
+class outside_class
+{
+    SCP_LOGGER("out.class", "thing1");
+
+public:
+    outside_class() {
+        SCP_INFO(())("constructor");
+        SCP_WARN(())("constructor");
+    }
+};
+
 SC_MODULE (test) {
+    outside_class oc;
     SC_CTOR (test) {
         SCP_DEBUG(SCMOD) << "First part";
         scp::tlm_extensions::path_trace ext;
@@ -156,6 +168,8 @@ int sc_main(int argc, char** argv) {
 
     std::string expected =
         R"([    info] [                0 s ]SystemC             : Constructing design
+[    info] [                0 s ]out.class           : constructor
+[ warning] [                0 s ]out.class           : constructor
 [   debug] [                0 s ]top                 : First part
 [    info] [                0 s ]top                 : top
 [    info] [                0 s ]top                 : top->top->top
