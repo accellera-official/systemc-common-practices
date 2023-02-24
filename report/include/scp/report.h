@@ -412,7 +412,7 @@ protected:
 #define SCP_LOGGER_NAME(x) CAT(_m_scp_log_level_cache_, x)
 
 /* User interface macros */
-#define SCMOD this->name()
+#define SCMOD this->sc_core::sc_module::name()
 #define SCP_LOGGER(...)                                                 \
     scp::scp_logger_cache IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))(        \
         SCP_LOGGER_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__))),      \
@@ -430,7 +430,8 @@ protected:
 class call_sc_name_fn
 {
     template <class T>
-    static auto test(T* p) -> decltype(p->name(), std::true_type());
+    static auto test(T* p)
+        -> decltype(p->sc_core::sc_module::name(), std::true_type());
     template <class T>
     static auto test(...) -> decltype(std::false_type());
 
@@ -442,7 +443,7 @@ public:
     template <class TYPE>
     auto operator()(TYPE* p) const
         -> std::enable_if_t<has_method<TYPE>, const char*> {
-        return p->name();
+        return p->sc_core::sc_module::name();
     }
 
     // define a function IF NOT the method exists
