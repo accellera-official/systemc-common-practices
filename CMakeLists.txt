@@ -26,7 +26,9 @@ cpmaddpackage(
   GIT_SHALLOW True
   GIT_TAG master
 )
-
+if(SystemCLanguage_ADDED)
+set(SystemCLanguage_FOUND TRUE)
+endif()
 
 cpmaddpackage(
   NAME initiator_id

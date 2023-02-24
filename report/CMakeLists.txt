@@ -28,13 +28,6 @@ cpmaddpackage(
 )
 
 cpmaddpackage(
-  NAME SystemCCCI
-  GIT_REPOSITORY  ${GITHUB}accellera-official/cci.git
-  GIT_SHALLOW True
-  GIT_TAG master
-)
-
-cpmaddpackage(
   NAME
   RapidJSON
   GIT_REPOSITORY
@@ -50,6 +43,12 @@ cpmaddpackage(
 
 set(RapidJSON_DIR "${RapidJSON_BINARY_DIR}")
 
+cpmaddpackage(
+  NAME SystemCCCI
+  GIT_REPOSITORY  ${GITHUB}accellera-official/cci.git
+  GIT_SHALLOW True
+  GIT_TAG master
+)
 
 set(WITH_FMT "true" CACHE STRING "Include FMT library")
 if (WITH_FMT)
