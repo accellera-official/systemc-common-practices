@@ -33,6 +33,7 @@
 #include <cxxabi.h>
 #endif
 
+#include <sysc/kernel/sc_module.h>
 #include <sysc/kernel/sc_time.h>
 #include <sysc/utils/sc_report.h>
 
