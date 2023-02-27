@@ -94,10 +94,11 @@ endif()
 target_link_libraries(${PROJECT_NAME} PUBLIC SystemC::systemc)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
-if(BUILD_TESTING AND ("${PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}"))
-   enable_testing()
-   add_subdirectory(tests)
-endif()
+#No tests yet. WIP.
+#if(BUILD_TESTING AND ("${PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}"))
+#   enable_testing()
+#   add_subdirectory(tests)
+#endif()
 
 add_library("scp::report::lib${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
 packageproject(
