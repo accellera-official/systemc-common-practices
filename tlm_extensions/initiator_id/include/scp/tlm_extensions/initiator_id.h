@@ -19,7 +19,8 @@
 #include <systemc>
 #include <tlm>
 
-namespace scp::tlm_extensions {
+namespace scp {
+namespace tlm_extensions {
 /**
  * @class initiator ID recording TLM extension
  *
@@ -69,5 +70,6 @@ public:
         return *this;
     }
 };
-} // namespace scp::tlm_extensions
+} // namespace tlm_extensions
+} // namespace scp
 #endif

@@ -24,8 +24,42 @@ cpmaddpackage(
   NAME SystemCLanguage
   GIT_REPOSITORY  ${GITHUB}accellera-official/systemc.git
   GIT_SHALLOW True
-  GIT_TAG 2.3.3
+  GIT_TAG master
 )
+
+cpmaddpackage(
+  NAME
+  RapidJSON
+  GIT_REPOSITORY
+  https://github.com/Tencent/rapidjson
+  GIT_TAG
+  e0f68a435610e70ab5af44fc6a90523d69b210b3
+  GIT_SHALLOW
+  FALSE
+  OPTIONS
+  "RAPIDJSON_BUILD_TESTS OFF"
+  "RAPIDJSON_BUILD_DOC OFF"
+  "RAPIDJSON_BUILD_EXAMPLES OFF")
+
+set(RapidJSON_DIR "${RapidJSON_BINARY_DIR}")
+
+cpmaddpackage(
+  NAME SystemCCCI
+  GIT_REPOSITORY  ${GITHUB}accellera-official/cci.git
+  GIT_SHALLOW True
+  GIT_TAG master
+)
+
+set(WITH_FMT "true" CACHE STRING "Include FMT library")
+if (WITH_FMT)
+cpmaddpackage(
+  NAME fmt
+  GIT_REPOSITORY  ${GITHUB}fmtlib/fmt.git
+  GIT_SHALLOW True
+  GIT_TAG 9.1.0
+  OPTIONS FMT_INSTALL "" ON
+)
+endif()
 
 FetchContent_Declare(
     spdlog_git
@@ -48,6 +82,10 @@ target_include_directories(
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
+if(TARGET fmt)
+  target_link_libraries(${PROJECT_NAME} PUBLIC fmt::fmt)
+endif()
+
 target_include_directories(${PROJECT_NAME} PRIVATE ${spdlog_git_SRC_DIR}/include)
 if(TARGET SystemC::cci)
   target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_CCI)
@@ -56,10 +94,11 @@ endif()
 target_link_libraries(${PROJECT_NAME} PUBLIC SystemC::systemc)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
-if(BUILD_TESTING AND ("${PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}"))
-   enable_testing()
-   add_subdirectory(tests)
-endif()
+#No tests yet. WIP.
+#if(BUILD_TESTING AND ("${PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}"))
+#   enable_testing()
+#   add_subdirectory(tests)
+#endif()
 
 add_library("scp::report::lib${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
 packageproject(

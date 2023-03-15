@@ -19,8 +19,77 @@
 
 #include <systemc>
 #include <tlm>
+#include <cci_configuration>
+
+#include <cstdio>
+#include <string>
+#include <fstream>
+#include <streambuf>
+#include <unistd.h>
+
+SC_MODULE (test4) {
+    SC_CTOR (test4) {
+        SCP_INFO(()) << " .   T4 Logger() 1";
+        SCP_WARN(()) << " .   T4 Logger() 1";
+        SCP_INFO(()) << " .   T4 Logger() 2";
+        SCP_WARN(()) << " .   T4 Logger() 2";
+    }
+    SCP_LOGGER();
+};
+
+SC_MODULE (test3) {
+    SC_CTOR (test3) {
+        SCP_INFO((D)) << " .  T3 D Logger \"other\" \"feature.one\"";
+        SCP_WARN((D)) << " .  T3 D Logger \"other\" \"feature.one\"";
+        SCP_INFO(()) << " .  T3 Logger ()";
+        SCP_WARN(()) << " .  T3 Logger ()";
+    }
+    SCP_LOGGER((D), "other", "feature.one");
+    SCP_LOGGER(());
+};
+
+SC_MODULE (test2) {
+    SC_CTOR (test2) : t31("t3_1"), t32("t3_2"), t4("t4") {
+            SCP_INFO(()) << "  T2 Logger()";
+            SCP_WARN(()) << "  T2 Logger()";
+        }
+    SCP_LOGGER();
+    test3 t31, t32;
+    test4 t4;
+};
+
+SC_MODULE (test1) {
+    SC_CTOR (test1) : t2("t2") {
+            SCP_WARN((), "My.Name") << " T1 My.Name typed log";
+            SCP_INFO(()) << " T1 Logger()";
+            SCP_WARN(()) << " T1 Logger()";
+
+            SCP_LOGGER_VECTOR_PUSH_BACK(vec, "some", "thing1");
+            SCP_LOGGER_VECTOR_PUSH_BACK(vec, "some", "thing2");
+
+            SCP_INFO((vec[0])) << "Thing1?";
+            SCP_WARN((vec[0])) << "Thing1?";
+            SCP_INFO((vec[1])) << "Thing2?";
+            SCP_WARN((vec[1])) << "Thing2?";
+        }
+    SCP_LOGGER("something", "else");
+    SCP_LOGGER_VECTOR(vec);
+    test2 t2;
+};
+
+class outside_class
+{
+    SCP_LOGGER("out.class", "thing1");
+
+public:
+    outside_class() {
+        SCP_INFO(())("constructor");
+        SCP_WARN(())("constructor");
+    }
+};
 
 SC_MODULE (test) {
+    outside_class oc;
     SC_CTOR (test) {
         SCP_DEBUG(SCMOD) << "First part";
         scp::tlm_extensions::path_trace ext;
@@ -47,17 +116,100 @@ SC_MODULE (test) {
         } else {
             SC_REPORT_INFO("ext test", "Failour");
         }
+
+        SCP_INFO() << "Uncached version empty";
+        SCP_INFO(())("FMT String : Cached version default");
+        SCP_INFO(SCMOD) << "UnCached version feature using SCMOD macro";
+        SCP_INFO((m_my_logger)) << "Cached version using (m_my_logger)";
+        SCP_INFO((D)) << "Cached version with D";
     }
+
+    SCP_LOGGER((m_my_logger));
+    SCP_LOGGER(());
+    SCP_LOGGER((1), "other");
+    SCP_LOGGER((D), "other", "feature.one");
 };
 
 int sc_main(int argc, char** argv) {
+    cci_utils::consuming_broker broker("global_broker");
+    cci_register_broker(broker);
+    cci::cci_originator orig("config");
+    broker.set_preset_cci_value("log_level", cci::cci_value(1), orig);
+    broker.set_preset_cci_value("top.log_level", cci::cci_value(5), orig);
+    broker.set_preset_cci_value("*.t3_1.log_level", cci::cci_value(5), orig);
+    broker.set_preset_cci_value("feature.log_level", cci::cci_value(5), orig);
+
+    broker.set_preset_cci_value("test4.log_level", cci::cci_value(4), orig);
+    broker.set_preset_cci_value("thing1.log_level", cci::cci_value(5), orig);
+
+    std::string logfile = "/tmp/scp_smoke_report_test." +
+                          std::to_string(getpid());
     scp::init_logging(
         scp::LogConfig()
             .logLevel(scp::log::DEBUG) // set log level to debug
-            .msgTypeFieldWidth(10)); // make the msg type column a bit tighter
+            .msgTypeFieldWidth(20)
+            .fileInfoFrom(5)
+            .logAsync(false)
+            .printSimTime(false)
+            .logFileName(logfile)); // make the msg type column a bit tighter
     SCP_INFO() << "Constructing design";
-    test test1("test");
+    test toptest("top");
+    test1 t1("t1");
+
     SCP_INFO() << "Starting simulation";
     sc_core::sc_start();
-    return 0;
+    SCP_WARN() << "Ending simulation";
+
+#ifdef FMT_SHARED
+    std::string fmtstr = "FMT String : Cached version default";
+#else
+    std::string fmtstr = "Please add FMT library for FMT support.";
+#endif
+
+    std::string expected =
+        R"([    info] [                0 s ]SystemC             : Constructing design
+[    info] [                0 s ]out.class           : constructor
+[ warning] [                0 s ]out.class           : constructor
+[   debug] [                0 s ]top                 : First part
+[    info] [                0 s ]top                 : top
+[    info] [                0 s ]top                 : top->top->top
+[   debug] [                0 s ]top                 : Second part
+[    info] [                0 s ]ext test            : Success
+[    info] [                0 s ]SystemC             : Uncached version empty
+[    info] [                0 s ]top                 : )" +
+        fmtstr + R"(
+[    info] [                0 s ]top                 : UnCached version feature using SCMOD macro
+[    info] [                0 s ]top                 : Cached version using (m_my_logger)
+[    info] [                0 s ]top                 : Cached version with D
+[    info] [                0 s ]t1.t2.t3_1          :  .  T3 D Logger "other" "feature.one"
+[ warning] [                0 s ]t1.t2.t3_1          :  .  T3 D Logger "other" "feature.one"
+[    info] [                0 s ]t1.t2.t3_1          :  .  T3 Logger ()
+[ warning] [                0 s ]t1.t2.t3_1          :  .  T3 Logger ()
+[    info] [                0 s ]t1.t2.t3_2          :  .  T3 D Logger "other" "feature.one"
+[ warning] [                0 s ]t1.t2.t3_2          :  .  T3 D Logger "other" "feature.one"
+[ warning] [                0 s ]t1.t2.t3_2          :  .  T3 Logger ()
+[    info] [                0 s ]t1.t2.t4            :  .   T4 Logger() 1
+[ warning] [                0 s ]t1.t2.t4            :  .   T4 Logger() 1
+[    info] [                0 s ]t1.t2.t4            :  .   T4 Logger() 2
+[ warning] [                0 s ]t1.t2.t4            :  .   T4 Logger() 2
+[ warning] [                0 s ]t1.t2               :   T2 Logger()
+[ warning] [                0 s ]My.Name             :  T1 My.Name typed log
+[ warning] [                0 s ]t1                  :  T1 Logger()
+[    info] [                0 s ]t1                  : Thing1?
+[ warning] [                0 s ]t1                  : Thing1?
+[ warning] [                0 s ]t1                  : Thing2?
+[    info] [                0 s ]SystemC             : Starting simulation
+[ warning] [                0 s ]SystemC             : Ending simulation
+)";
+
+    std::ifstream lf(logfile);
+    std::string out((std::istreambuf_iterator<char>(lf)),
+                    std::istreambuf_iterator<char>());
+
+    std::cout << "out file\n" << out << "\n";
+    std::cout << "expected\n" << expected << "\n";
+    std::cout << "Number of difference: " << out.compare(expected) << "\n";
+
+    std::remove(logfile.c_str());
+    return out.compare(expected);
 }
