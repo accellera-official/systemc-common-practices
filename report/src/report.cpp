@@ -572,11 +572,7 @@ sc_core::sc_verbosity cci_lookup(cci::cci_broker_handle broker,
         auto val = broker.get_preset_cci_value(param_name);
 
         if (val.is_int()) {
-            broker.ignore_unconsumed_preset_values(
-                [param_name](const std::pair<std::string, cci::cci_value>& iv)
-                    -> bool { return iv.first == param_name; });
             broker.lock_preset_value(param_name);
-
             return verbosity.at(
                 std::min<unsigned>(val.get_int(), verbosity.size() - 1));
         }
