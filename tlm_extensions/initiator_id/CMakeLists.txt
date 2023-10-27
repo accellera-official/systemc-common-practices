@@ -21,10 +21,10 @@ include(${cpm-cmake_SOURCE_DIR}/cmake/CPM.cmake)
 cpmaddpackage("${GITHUB}TheLartians/PackageProject.cmake.git@1.4.1")
 
 cpmaddpackage(
-  NAME SystemCLanguage
-  GIT_REPOSITORY  ${GITHUB}accellera-official/systemc.git
-  GIT_SHALLOW True
-  GIT_TAG master
+   NAME SystemCLanguage
+   GIT_REPOSITORY  ${GITHUB}accellera-official/systemc.git
+   GIT_SHALLOW True
+   GIT_TAG main
 )
 
 add_library(${PROJECT_NAME} INTERFACE)
