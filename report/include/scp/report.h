@@ -450,7 +450,7 @@ public:
     // define a function IF NOT the method exists
     template <class TYPE>
     auto operator()(TYPE* p) const
-        -> std::enable_if_t<not has_method<TYPE>, const char*> {
+        -> std::enable_if_t<!has_method<TYPE>, const char*> {
         return nullptr;
     }
 };
