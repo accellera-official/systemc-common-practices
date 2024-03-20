@@ -39,7 +39,26 @@
 #if defined(_MSC_VER) && defined(ERROR)
 #undef ERROR
 #endif
-
+static const std::array<sc_core::sc_severity, 8> severity = {
+    sc_core::SC_FATAL,   // scp::log::NONE
+    sc_core::SC_FATAL,   // scp::log::FATAL
+    sc_core::SC_ERROR,   // scp::log::ERROR
+    sc_core::SC_WARNING, // scp::log::WARNING
+    sc_core::SC_INFO,    // scp::log::INFO
+    sc_core::SC_INFO,    // scp::log::DEBUG
+    sc_core::SC_INFO,    // scp::log::TRACE
+    sc_core::SC_INFO     // scp::log::TRACEALL
+};
+static const std::array<sc_core::sc_verbosity, 8> verbosity = {
+    sc_core::SC_NONE,   // scp::log::NONE
+    sc_core::SC_LOW,    // scp::log::FATAL
+    sc_core::SC_LOW,    // scp::log::ERROR
+    sc_core::SC_LOW,    // scp::log::WARNING
+    sc_core::SC_MEDIUM, // scp::log::INFO
+    sc_core::SC_HIGH,   // scp::log::DEBUG
+    sc_core::SC_FULL,   // scp::log::TRACE
+    sc_core::SC_DEBUG   // scp::log::TRACEALL
+};
 namespace sc_core {
 const sc_core::sc_verbosity SC_UNSET = (sc_core::sc_verbosity)INT_MAX;
 }
