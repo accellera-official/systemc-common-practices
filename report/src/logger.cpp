@@ -529,3 +529,10 @@ auto scp::LogConfig::fileInfoFrom(int v) -> scp::LogConfig& {
     this->file_info_from = v;
     return *this;
 }
+auto scp::LogConfig::registerLogLevelFn(
+    std::function<sc_core::sc_verbosity(struct scp_logger_cache&, const char*,
+                                        const char*)>
+        fn) -> scp::LogConfig& {
+    this->log_level_lookup_fn = fn;
+    return *this;
+}
