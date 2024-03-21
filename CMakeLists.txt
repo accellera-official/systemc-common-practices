@@ -19,15 +19,20 @@ FetchContent_MakeAvailable(cpm-cmake)
 include(${cpm-cmake_SOURCE_DIR}/cmake/CPM.cmake)
 
 cpmaddpackage("${GITHUB}TheLartians/PackageProject.cmake.git@1.4.1")
+# check if caller has already setup SystemC based on e.g. SYSTEMC_HOME
 
-cpmaddpackage(
-  NAME SystemCLanguage
-  GIT_REPOSITORY  ${GITHUB}accellera-official/systemc.git
-  GIT_SHALLOW True
-  GIT_TAG master
-)
-if(SystemCLanguage_ADDED)
-set(SystemCLanguage_FOUND TRUE)
+if(DEFINED ENV{SYSTEMC_HOME})
+  cpmaddpackage(
+    NAME SystemCLanguage
+    SOURCE_DIR ENV{SYSTEMC_HOME}
+  )
+else ()
+  cpmaddpackage(
+    NAME SystemCLanguage
+    GIT_REPOSITORY  ${GITHUB}accellera-official/systemc.git
+    GIT_SHALLOW True
+    GIT_TAG main
+  )
 endif()
 
 cpmaddpackage(
