@@ -46,7 +46,7 @@ static std::string scp_txn_tostring(tlm::tlm_generic_payload& trans) {
              << (unsigned int)(ptr[i - 1]);
     }
     info << " status: " << trans.get_response_string() << " ";
-    for (int i = 0; i < tlm::max_num_extensions(); i++) {
+    for (unsigned int i = 0; i < tlm::max_num_extensions(); i++) {
         if (trans.get_extension(i)) {
             info << " extn:" << i;
         }
