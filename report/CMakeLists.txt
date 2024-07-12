@@ -27,12 +27,31 @@ cpmaddpackage(
   GIT_TAG main
 )
 
+# upstream set INSTALL_NAME_DIR wrong !
+if (APPLE)
+  set_target_properties(
+    systemc
+    PROPERTIES
+    INSTALL_NAME_DIR "@rpath"
+  )
+endif()
+
 cpmaddpackage(
   NAME SystemCCCI
   GIT_REPOSITORY  ${GITHUB}accellera-official/cci.git
   GIT_SHALLOW True
   GIT_TAG main
 )
+
+# upstream set INSTALL_NAME_DIR wrong !
+if (APPLE)
+  set_target_properties(
+    cci
+    PROPERTIES
+    INSTALL_NAME_DIR "@rpath"
+  )
+endif()
+
 
 set(WITH_FMT "true" CACHE STRING "Include FMT library")
 if (WITH_FMT)

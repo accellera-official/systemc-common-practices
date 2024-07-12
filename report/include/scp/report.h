@@ -44,7 +44,26 @@
 #if defined(_MSC_VER) && defined(ERROR)
 #undef ERROR
 #endif
-
+static const std::array<sc_core::sc_severity, 8> severity = {
+    sc_core::SC_FATAL,   // scp::log::NONE
+    sc_core::SC_FATAL,   // scp::log::FATAL
+    sc_core::SC_ERROR,   // scp::log::ERROR
+    sc_core::SC_WARNING, // scp::log::WARNING
+    sc_core::SC_INFO,    // scp::log::INFO
+    sc_core::SC_INFO,    // scp::log::DEBUG
+    sc_core::SC_INFO,    // scp::log::TRACE
+    sc_core::SC_INFO     // scp::log::TRACEALL
+};
+static const std::array<sc_core::sc_verbosity, 8> verbosity = {
+    sc_core::SC_NONE,   // scp::log::NONE
+    sc_core::SC_LOW,    // scp::log::FATAL
+    sc_core::SC_LOW,    // scp::log::ERROR
+    sc_core::SC_LOW,    // scp::log::WARNING
+    sc_core::SC_MEDIUM, // scp::log::INFO
+    sc_core::SC_HIGH,   // scp::log::DEBUG
+    sc_core::SC_FULL,   // scp::log::TRACE
+    sc_core::SC_DEBUG   // scp::log::TRACEALL
+};
 namespace sc_core {
 const sc_core::sc_verbosity SC_UNSET = (sc_core::sc_verbosity)INT_MAX;
 }
@@ -168,6 +187,10 @@ struct LogConfig {
     bool report_only_first_error{ false };
     int file_info_from{ sc_core::SC_INFO };
 
+    std::function<sc_core::sc_verbosity(struct scp_logger_cache&, const char*,
+                                        const char*)>
+        log_level_lookup_fn;
+
     //! set the logging level
     LogConfig& logLevel(log);
     //! define the width of the message field, 0 to disable,
@@ -197,6 +220,10 @@ struct LogConfig {
     LogConfig& fileInfoFrom(int);
     //! disable/enable the supression of all error messages after the first
     LogConfig& reportOnlyFirstError(bool = true);
+    //! register log level function
+    LogConfig& registerLogLevelFn(
+        std::function<sc_core::sc_verbosity(struct scp_logger_cache&,
+                                            const char*, const char*)>);
 };
 
 /**
