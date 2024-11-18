@@ -12,7 +12,7 @@ FetchContent_Declare(
   cpm-cmake
   GIT_REPOSITORY ${GITHUB}cpm-cmake/CPM.cmake.git
   GIT_SHALLOW True
-  GIT_TAG v0.31.1
+  GIT_TAG v0.40.2
 )
 
 FetchContent_MakeAvailable(cpm-cmake)
