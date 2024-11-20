@@ -116,11 +116,12 @@ SC_MODULE (test) {
             SC_REPORT_INFO("ext test", "Failour");
         }
 
-        SCP_INFO() << "Uncached version empty";
-        SCP_INFO(())("FMT String : Cached version default");
-        SCP_INFO(SCMOD) << "UnCached version feature using SCMOD macro";
-        SCP_INFO((m_my_logger)) << "Cached version using (m_my_logger)";
-        SCP_INFO((D)) << "Cached version with D";
+        SCP_INFO() << "Globally cached version empty";
+        SCP_INFO(())("FMT String : Locally cached version default");
+        SCP_INFO(SCMOD) << "Globally cached version feature using SCMOD macro";
+        SCP_INFO((m_my_logger))
+            << "Locally cached version using (m_my_logger)";
+        SCP_INFO((D)) << "Locally cached version with D";
     }
 
     SCP_LOGGER((m_my_logger));
@@ -160,7 +161,7 @@ int sc_main(int argc, char** argv) {
     SCP_WARN() << "Ending simulation";
 
 #ifdef FMT_SHARED
-    std::string fmtstr = "FMT String : Cached version default";
+    std::string fmtstr = "FMT String : Locally cached version default";
 #else
     std::string fmtstr = "Please add FMT library for FMT support.";
 #endif
@@ -174,12 +175,12 @@ int sc_main(int argc, char** argv) {
 [    info] [                0 s ]top                 : top->top->top
 [   debug] [                0 s ]top                 : Second part
 [    info] [                0 s ]ext test            : Success
-[    info] [                0 s ]SystemC             : Uncached version empty
+[    info] [                0 s ]SystemC             : Globally cached version empty
 [    info] [                0 s ]top                 : )" +
         fmtstr + R"(
-[    info] [                0 s ]top                 : UnCached version feature using SCMOD macro
-[    info] [                0 s ]top                 : Cached version using (m_my_logger)
-[    info] [                0 s ]top                 : Cached version with D
+[    info] [                0 s ]top                 : Globally cached version feature using SCMOD macro
+[    info] [                0 s ]top                 : Locally cached version using (m_my_logger)
+[    info] [                0 s ]top                 : Locally cached version with D
 [    info] [                0 s ]t1.t2.t3_1          :  .  T3 D Logger "other" "feature.one"
 [ warning] [                0 s ]t1.t2.t3_1          :  .  T3 D Logger "other" "feature.one"
 [    info] [                0 s ]t1.t2.t3_1          :  .  T3 Logger ()

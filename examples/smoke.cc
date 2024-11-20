@@ -41,9 +41,9 @@ SC_MODULE (test) {
         uint64_t myint = mid + mid;
         myint += mid;
         if (mid == 0x450) {
-            SC_REPORT_INFO("ext test", "Success");
+            SCP_INFO("ext test") << "Success";
         } else {
-            SC_REPORT_INFO("ext test", "Failour");
+            SCP_INFO("ext test") << "Failure";
         }
     }
 };
