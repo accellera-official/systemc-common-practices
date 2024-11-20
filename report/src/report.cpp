@@ -20,11 +20,13 @@
  *      Author: eyck@minres.com
  */
 
-#include <scp/report.h>
+#include <scp/logger.h>
 #include <array>
 #include <chrono>
 #include <fstream>
+#include <numeric>
 #include <systemc>
+#include <iomanip>
 #ifdef HAS_CCI
 #include <cci_configuration>
 #endif
@@ -157,8 +159,8 @@ auto time2string(const sc_core::sc_time& t) -> std::string {
     }
     return oss.str();
 }
-auto compose_message(const sc_core::sc_report& rep, const scp::LogConfig& cfg)
-    -> const std::string {
+auto compose_message(const sc_core::sc_report& rep,
+                     const scp::LogConfig& cfg) -> const std::string {
     if (rep.get_severity() > sc_core::SC_INFO ||
         cfg.log_filter_regex.length() == 0 ||
         rep.get_verbosity() == sc_core::SC_MEDIUM ||
@@ -188,8 +190,7 @@ auto compose_message(const sc_core::sc_report& rep, const scp::LogConfig& cfg)
             }
         }
         if (unlikely(rep.get_id() >= 0))
-            os << "("
-               << "IWEF"[rep.get_severity()] << rep.get_id() << ") "
+            os << "(" << "IWEF"[rep.get_severity()] << rep.get_id() << ") "
                << rep.get_msg_type() << ": ";
         else if (cfg.msg_type_field_width) {
             if (cfg.msg_type_field_width ==

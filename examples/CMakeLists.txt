@@ -10,3 +10,4 @@ endmacro()
 
 run_test(smoke)
 run_test(smoke_report)
+run_test(smoke_logger)

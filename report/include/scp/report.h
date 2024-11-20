@@ -18,18 +18,13 @@
 #define _SCP_REPORT_H_
 
 #include <cstring>
-#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <array>
-#include <numeric>
 #include <vector>
-#include <numeric>
-#include <functional>
 
 #ifdef __GNUG__
 #include <cstdlib>
-#include <memory>
 #include <cxxabi.h>
 #endif
 
@@ -126,78 +121,6 @@ inline std::ostream& operator<<(std::ostream& os, log const& val) {
     os << buffer[static_cast<unsigned>(val)];
     return os;
 }
-/**
- * @fn void init_logging(log=log::WARNING, unsigned=24, bool=false)
- * @brief initializes the SystemC logging system with a particular logging
- * level
- *
- * @param level the log level
- * @param type_field_width the with of the type field in the output
- * @param print_time whether to print the system time stamp
- */
-void init_logging(log level = log::WARNING, unsigned type_field_width = 24,
-                  bool print_time = false);
-/**
- * @fn void init_logging(log=log::WARNING, unsigned=24, bool=false)
- * @brief initializes the SystemC logging system with a particular logging
- * level
- *
- * @param level the log level
- * @param type_field_width the with of the type field in the output
- * @param print_time whether to print the system time stamp
- */
-void reinit_logging(log level = log::WARNING);
-/**
- * @struct LogConfig
- * @brief the configuration class for the logging setup
- *
- * using this class allows to configure the logging output in many aspects. The
- * class follows the builder pattern.
- */
-struct LogConfig {
-    log level{ log::WARNING };
-    unsigned msg_type_field_width{ 24 };
-    bool print_sys_time{ false };
-    bool print_sim_time{ true };
-    bool print_delta{ false };
-    bool print_severity{ true };
-    bool colored_output{ true };
-    std::string log_file_name{ "" };
-    std::string log_filter_regex{ "" };
-    bool log_async{ true };
-    bool report_only_first_error{ false };
-    int file_info_from{ sc_core::SC_INFO };
-
-    //! set the logging level
-    LogConfig& logLevel(log);
-    //! define the width of the message field, 0 to disable,
-    //! std::numeric_limits<unsigned>::max() for arbitrary width
-    LogConfig& msgTypeFieldWidth(unsigned);
-    //! enable/disable printing of system time
-    LogConfig& printSysTime(bool = true);
-    //! enable/disable printing of simulation time
-    LogConfig& printSimTime(bool = true);
-    //! enable/disable printing delta cycles
-    LogConfig& printDelta(bool = true);
-    //! enable/disable printing of severity level
-    LogConfig& printSeverity(bool = true);
-    //! enable/disable colored output
-    LogConfig& coloredOutput(bool = true);
-    //! set the file name for the log output file
-    LogConfig& logFileName(std::string&&);
-    //! set the file name for the log output file
-    LogConfig& logFileName(const std::string&);
-    //! set the regular expression to filter the output
-    LogConfig& logFilterRegex(std::string&&);
-    //! set the regular expression to filter the output
-    LogConfig& logFilterRegex(const std::string&);
-    //! enable/disable asynchronous output (write to file in separate thread
-    LogConfig& logAsync(bool = true);
-    //! disable the printing of the file name from this level upwards.
-    LogConfig& fileInfoFrom(int);
-    //! disable/enable the supression of all error messages after the first
-    LogConfig& reportOnlyFirstError(bool = true);
-};
 
 /**
  * @brief cached logging information used in the (logger) form.
@@ -216,44 +139,6 @@ struct scp_logger_cache {
     sc_core::sc_verbosity get_log_verbosity_cached(const char*, const char*);
 };
 
-/**
- * @fn void init_logging(const LogConfig&)
- * @brief initializes the SystemC logging system with a particular
- * configuration
- *
- * @param log_config the logging configuration
- */
-void init_logging(const LogConfig& log_config);
-/**
- * @fn void set_logging_level(log)
- * @brief sets the SystemC logging level
- *
- * @param level the logging level
- */
-void set_logging_level(log level);
-/**
- * @fn log get_logging_level()
- * @brief get the SystemC logging level
- *
- * @return the logging level
- */
-log get_logging_level();
-/**
- * @fn void set_cycle_base(sc_core::sc_time)
- * @brief sets the cycle base for cycle based logging
- *
- * if this is set to a non-SC_ZERO_TIME value all logging timestamps are
- * printed as cyles (multiple of this value)
- *
- * @param period the cycle period
- */
-void set_cycle_base(sc_core::sc_time period);
-/**
- * @fn sc_core::sc_verbosity get_log_verbosity()
- * @brief get the global verbosity level
- *
- * @return the global verbosity level
- */
 inline sc_core::sc_verbosity get_log_verbosity() {
     return static_cast<sc_core::sc_verbosity>(
         ::sc_core::sc_report_handler::get_verbosity_level());
@@ -431,8 +316,8 @@ protected:
 class call_sc_name_fn
 {
     template <class T>
-    static auto test(T* p)
-        -> decltype(p->sc_core::sc_module::name(), std::true_type());
+    static auto test(T* p) -> decltype(p->sc_core::sc_module::name(),
+                                       std::true_type());
     template <class T>
     static auto test(...) -> decltype(std::false_type());
 
