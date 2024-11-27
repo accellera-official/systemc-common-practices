@@ -36,7 +36,8 @@ static std::string scp_txn_tostring(tlm::tlm_generic_payload& trans) {
         cmd = "READ";
         break;
     }
-    info << cmd << " to address: " << "0x" << std::hex << trans.get_address();
+    info << cmd << " to address: "
+         << "0x" << std::hex << trans.get_address();
     info << " len: " << trans.get_data_length();
     unsigned char* ptr = trans.get_data_ptr();
     info << " data: 0x";
