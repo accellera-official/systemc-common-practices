@@ -316,8 +316,8 @@ protected:
 class call_sc_name_fn
 {
     template <class T>
-    static auto test(T* p) -> decltype(p->sc_core::sc_module::name(),
-                                       std::true_type());
+    static auto test(T* p)
+        -> decltype(p->sc_core::sc_module::name(), std::true_type());
     template <class T>
     static auto test(...) -> decltype(std::false_type());
 
