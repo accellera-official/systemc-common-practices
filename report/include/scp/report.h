@@ -497,29 +497,34 @@ public:
 /*** End HELPER Macros *******/
 
 //! macro for debug trace level output
-#define SCP_TRACEALL(...)                                  \
-    if (SCP_VBSTY_CHECK(sc_core::SC_DEBUG, ##__VA_ARGS__)) \
-    SCP_LOG(sc_core::SC_DEBUG, __VA_ARGS__)
+#define SCP_TRACEALL(...)                                       \
+    if (!(SCP_VBSTY_CHECK(sc_core::SC_DEBUG, ##__VA_ARGS__))) { \
+    } else                                                      \
+        SCP_LOG(sc_core::SC_DEBUG, __VA_ARGS__)
 //! macro for trace level output
-#define SCP_TRACE(...)                                    \
-    if (SCP_VBSTY_CHECK(sc_core::SC_FULL, ##__VA_ARGS__)) \
-    SCP_LOG(sc_core::SC_FULL, __VA_ARGS__)
+#define SCP_TRACE(...)                                         \
+    if (!(SCP_VBSTY_CHECK(sc_core::SC_FULL, ##__VA_ARGS__))) { \
+    } else                                                     \
+        SCP_LOG(sc_core::SC_FULL, __VA_ARGS__)
 //! macro for debug level output
-#define SCP_DEBUG(...)                                    \
-    if (SCP_VBSTY_CHECK(sc_core::SC_HIGH, ##__VA_ARGS__)) \
-    SCP_LOG(sc_core::SC_HIGH, __VA_ARGS__)
+#define SCP_DEBUG(...)                                         \
+    if (!(SCP_VBSTY_CHECK(sc_core::SC_HIGH, ##__VA_ARGS__))) { \
+    } else                                                     \
+        SCP_LOG(sc_core::SC_HIGH, __VA_ARGS__)
 //! macro for info level output
-#define SCP_INFO(...)                                       \
-    if (SCP_VBSTY_CHECK(sc_core::SC_MEDIUM, ##__VA_ARGS__)) \
-    SCP_LOG(sc_core::SC_MEDIUM, __VA_ARGS__)
+#define SCP_INFO(...)                                            \
+    if (!(SCP_VBSTY_CHECK(sc_core::SC_MEDIUM, ##__VA_ARGS__))) { \
+    } else                                                       \
+        SCP_LOG(sc_core::SC_MEDIUM, __VA_ARGS__)
 //! macro for warning level output
-#define SCP_WARN(...)                                          \
-    if (SCP_VBSTY_CHECK(sc_core::SC_LOW, ##__VA_ARGS__))       \
-    ::scp::ScLogger<::sc_core::SC_WARNING>(__FILE__, __LINE__, \
-                                           sc_core::SC_MEDIUM) \
-            .type(SCP_GET_FEATURES(__VA_ARGS__))               \
-            .get()                                             \
-        << _SCP_FMT_EMPTY_STR
+#define SCP_WARN(...)                                              \
+    if (!(SCP_VBSTY_CHECK(sc_core::SC_LOW, ##__VA_ARGS__))) {      \
+    } else                                                         \
+        ::scp::ScLogger<::sc_core::SC_WARNING>(__FILE__, __LINE__, \
+                                               sc_core::SC_MEDIUM) \
+                .type(SCP_GET_FEATURES(__VA_ARGS__))               \
+                .get()                                             \
+            << _SCP_FMT_EMPTY_STR
 //! macro for error level output
 #define SCP_ERR(...)                                         \
     ::scp::ScLogger<::sc_core::SC_ERROR>(__FILE__, __LINE__, \
