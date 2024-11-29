@@ -16,11 +16,11 @@
   permissions and limitations under the License.
 
 *****************************************************************************/
+
+#include <systemc>
+#include <tlm>
 #ifndef _SCP_HELPERS_H_
 #define _SCP_HELPERS_H_
-
-#include <tlm>
-
 namespace scp {
 static std::string scp_txn_tostring(tlm::tlm_generic_payload& trans) {
     std::stringstream info;
