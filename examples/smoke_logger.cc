@@ -15,7 +15,7 @@
 
 #include <scp/tlm_extensions/initiator_id.h>
 #include <scp/tlm_extensions/path_trace.h>
-#include <scp/report.h>
+#include <scp/logger.h>
 
 #include <systemc>
 #include <tlm>
@@ -23,6 +23,7 @@
 
 #include <cstdio>
 #include <string>
+#include <fstream>
 #include <unistd.h>
 
 SC_MODULE (test4) {
@@ -115,11 +116,12 @@ SC_MODULE (test) {
             SC_REPORT_INFO("ext test", "Failour");
         }
 
-        SCP_INFO() << "Uncached version empty";
-        SCP_INFO(())("FMT String : Cached version default");
-        SCP_INFO(SCMOD) << "UnCached version feature using SCMOD macro";
-        SCP_INFO((m_my_logger)) << "Cached version using (m_my_logger)";
-        SCP_INFO((D)) << "Cached version with D";
+        SCP_INFO() << "Globally cached version empty";
+        SCP_INFO(())("FMT String : Locally cached version default");
+        SCP_INFO(SCMOD) << "Globally cached version feature using SCMOD macro";
+        SCP_INFO((m_my_logger))
+            << "Locally cached version using (m_my_logger)";
+        SCP_INFO((D)) << "Locally cached version with D";
     }
 
     SCP_LOGGER((m_my_logger));
@@ -142,6 +144,14 @@ int sc_main(int argc, char** argv) {
 
     std::string logfile = "/tmp/scp_smoke_report_test." +
                           std::to_string(getpid());
+    scp::init_logging(
+        scp::LogConfig()
+            .logLevel(scp::log::DEBUG) // set log level to debug
+            .msgTypeFieldWidth(20)
+            .fileInfoFrom(5)
+            .logAsync(false)
+            .printSimTime(false)
+            .logFileName(logfile)); // make the msg type column a bit tighter
     SCP_INFO() << "Constructing design";
     test toptest("top");
     test1 t1("t1");
@@ -150,5 +160,56 @@ int sc_main(int argc, char** argv) {
     sc_core::sc_start();
     SCP_WARN() << "Ending simulation";
 
-    return 0;
+#ifdef FMT_SHARED
+    std::string fmtstr = "FMT String : Locally cached version default";
+#else
+    std::string fmtstr = "Please add FMT library for FMT support.";
+#endif
+
+    std::string expected =
+        R"([    info] [                0 s ]SystemC             : Constructing design
+[    info] [                0 s ]out.class           : constructor
+[ warning] [                0 s ]out.class           : constructor
+[   debug] [                0 s ]top                 : First part
+[    info] [                0 s ]top                 : top
+[    info] [                0 s ]top                 : top->top->top
+[   debug] [                0 s ]top                 : Second part
+[    info] [                0 s ]ext test            : Success
+[    info] [                0 s ]SystemC             : Globally cached version empty
+[    info] [                0 s ]top                 : )" +
+        fmtstr + R"(
+[    info] [                0 s ]top                 : Globally cached version feature using SCMOD macro
+[    info] [                0 s ]top                 : Locally cached version using (m_my_logger)
+[    info] [                0 s ]top                 : Locally cached version with D
+[    info] [                0 s ]t1.t2.t3_1          :  .  T3 D Logger "other" "feature.one"
+[ warning] [                0 s ]t1.t2.t3_1          :  .  T3 D Logger "other" "feature.one"
+[    info] [                0 s ]t1.t2.t3_1          :  .  T3 Logger ()
+[ warning] [                0 s ]t1.t2.t3_1          :  .  T3 Logger ()
+[    info] [                0 s ]t1.t2.t3_2          :  .  T3 D Logger "other" "feature.one"
+[ warning] [                0 s ]t1.t2.t3_2          :  .  T3 D Logger "other" "feature.one"
+[ warning] [                0 s ]t1.t2.t3_2          :  .  T3 Logger ()
+[    info] [                0 s ]t1.t2.t4            :  .   T4 Logger() 1
+[ warning] [                0 s ]t1.t2.t4            :  .   T4 Logger() 1
+[    info] [                0 s ]t1.t2.t4            :  .   T4 Logger() 2
+[ warning] [                0 s ]t1.t2.t4            :  .   T4 Logger() 2
+[ warning] [                0 s ]t1.t2               :   T2 Logger()
+[ warning] [                0 s ]My.Name             :  T1 My.Name typed log
+[ warning] [                0 s ]t1                  :  T1 Logger()
+[    info] [                0 s ]t1                  : Thing1?
+[ warning] [                0 s ]t1                  : Thing1?
+[ warning] [                0 s ]t1                  : Thing2?
+[    info] [                0 s ]SystemC             : Starting simulation
+[ warning] [                0 s ]SystemC             : Ending simulation
+)";
+
+    std::ifstream lf(logfile);
+    std::string out((std::istreambuf_iterator<char>(lf)),
+                    std::istreambuf_iterator<char>());
+
+    std::cout << "out file\n" << out << "\n";
+    std::cout << "expected\n" << expected << "\n";
+    std::cout << "Number of difference: " << out.compare(expected) << "\n";
+
+    std::remove(logfile.c_str());
+    return out.compare(expected);
 }
