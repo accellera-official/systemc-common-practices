@@ -27,7 +27,9 @@
 #include <systemc>
 #include <iomanip>
 #ifdef HAS_CCI
+#include <systemc>
 #include <cci_configuration>
+#include "scp/report_cci_setter.h"
 #endif
 #include <mutex>
 #include <spdlog/async.h>
@@ -336,26 +338,6 @@ void report_handler(const sc_core::sc_report& rep,
 // }
 } // namespace
 
-static const std::array<sc_core::sc_severity, 8> severity = {
-    sc_core::SC_FATAL,   // scp::log::NONE
-    sc_core::SC_FATAL,   // scp::log::FATAL
-    sc_core::SC_ERROR,   // scp::log::ERROR
-    sc_core::SC_WARNING, // scp::log::WARNING
-    sc_core::SC_INFO,    // scp::log::INFO
-    sc_core::SC_INFO,    // scp::log::DEBUG
-    sc_core::SC_INFO,    // scp::log::TRACE
-    sc_core::SC_INFO     // scp::log::TRACEALL
-};
-static const std::array<sc_core::sc_verbosity, 8> verbosity = {
-    sc_core::SC_NONE,   // scp::log::NONE
-    sc_core::SC_LOW,    // scp::log::FATAL
-    sc_core::SC_LOW,    // scp::log::ERROR
-    sc_core::SC_LOW,    // scp::log::WARNING
-    sc_core::SC_MEDIUM, // scp::log::INFO
-    sc_core::SC_HIGH,   // scp::log::DEBUG
-    sc_core::SC_FULL,   // scp::log::TRACE
-    sc_core::SC_DEBUG   // scp::log::TRACEALL
-};
 static std::mutex cfg_guard;
 static void configure_logging() {
     std::lock_guard<std::mutex> lock(cfg_guard);
@@ -527,12 +509,5 @@ auto scp::LogConfig::reportOnlyFirstError(bool v) -> scp::LogConfig& {
 
 auto scp::LogConfig::fileInfoFrom(int v) -> scp::LogConfig& {
     this->file_info_from = v;
-    return *this;
-}
-auto scp::LogConfig::registerLogLevelFn(
-    std::function<sc_core::sc_verbosity(struct scp_logger_cache&, const char*,
-                                        const char*)>
-        fn) -> scp::LogConfig& {
-    this->log_level_lookup_fn = fn;
     return *this;
 }

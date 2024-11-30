@@ -17,7 +17,7 @@
 #ifndef _SCP_LOGGER_H_
 #define _SCP_LOGGER_H_
 
-#include "report.h"
+#include "sc_report.h"
 
 /** \ingroup scp-report
  *  @{
