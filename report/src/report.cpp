@@ -21,14 +21,9 @@
  */
 
 #include <scp/logger.h>
-#include <array>
-#include <numeric>
 #include <systemc>
-#include <spdlog/async.h>
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
 #include <unordered_map>
+
 #if defined(__GNUC__) || defined(__clang__)
 #define likely(x)   __builtin_expect(x, 1)
 #define unlikely(x) __builtin_expect(x, 0)
@@ -78,8 +73,13 @@ sc_core::sc_verbosity scp::scp_logger_cache::get_log_verbosity_cached(
 
     type = std::string(scname);
 
-    if (log_cfg.log_level_lookup_fn) {
-        return log_cfg.log_level_lookup_fn(*this, scname, tname);
+    // find the first suitable registered sc_object that can handle the lookup
+    for (auto o : sc_core::sc_get_top_level_objects()) {
+        auto* h = dynamic_cast<scp::scp_global_logger_handler*>(o);
+        if (h) {
+            auto& h_ref = *h;
+            return h_ref(*this, scname, tname);
+        }
     }
 
     return level = static_cast<sc_core::sc_verbosity>(

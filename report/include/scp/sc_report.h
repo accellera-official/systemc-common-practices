@@ -158,6 +158,12 @@ struct scp_logger_cache {
     sc_core::sc_verbosity get_log_verbosity_cached(const char*, const char*);
 };
 
+struct scp_global_logger_handler :  sc_core::sc_object {
+    virtual sc_core::sc_verbosity operator()(struct scp_logger_cache& logger,
+                                     const char* scname,
+                                     const char* tname) const =0;
+};
+
 inline sc_core::sc_verbosity get_log_verbosity() {
     return static_cast<sc_core::sc_verbosity>(
         ::sc_core::sc_report_handler::get_verbosity_level());

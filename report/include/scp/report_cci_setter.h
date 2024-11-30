@@ -20,11 +20,12 @@
 #include <cci_configuration>
 #include <type_traits>
 #include <regex>
+#include <numeric>
 
 namespace scp {
 static std::set<std::string> logging_parameters;
 
-class scp_logger_from_cci
+class scp_logger_from_cci : public scp_global_logger_handler
 {
     std::vector<std::string> split(const std::string& s) const {
         std::vector<std::string> result;
@@ -151,6 +152,8 @@ public:
                                         logging_parameters.end());
     }
 };
+
+static scp_logger_from_cci _global_scp_logger_from_cci;
 
 #if 0
 
