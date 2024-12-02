@@ -47,7 +47,8 @@ SC_MODULE (test3) {
 };
 
 SC_MODULE (test2) {
-    SC_CTOR (test2) : t31("t3_1"), t32("t3_2"), t4("t4") {
+    SC_CTOR (test2) : t31("t3_1"), t32("t3_2"), t4("t4")
+        {
             SCP_INFO(()) << "  T2 Logger()";
             SCP_WARN(()) << "  T2 Logger()";
         }
@@ -57,7 +58,8 @@ SC_MODULE (test2) {
 };
 
 SC_MODULE (test1) {
-    SC_CTOR (test1) : t2("t2") {
+    SC_CTOR (test1) : t2("t2")
+        {
             SCP_WARN((), "My.Name") << " T1 My.Name typed log";
             SCP_INFO(()) << " T1 Logger()";
             SCP_WARN(()) << " T1 Logger()";
@@ -80,7 +82,8 @@ class outside_class
     SCP_LOGGER("out.class", "thing1");
 
 public:
-    outside_class() {
+    outside_class()
+    {
         SCP_INFO(())("constructor");
         SCP_WARN(())("constructor");
     }
@@ -128,7 +131,8 @@ SC_MODULE (test) {
     SCP_LOGGER((D), "other", "feature.one");
 };
 
-int sc_main(int argc, char** argv) {
+int sc_main(int argc, char** argv)
+{
     cci_utils::consuming_broker broker("global_broker");
     cci_register_broker(broker);
     cci::cci_originator orig("config");
@@ -140,8 +144,7 @@ int sc_main(int argc, char** argv) {
     broker.set_preset_cci_value("test4.log_level", cci::cci_value(4), orig);
     broker.set_preset_cci_value("thing1.log_level", cci::cci_value(5), orig);
 
-    std::string logfile = "/tmp/scp_smoke_report_test." +
-                          std::to_string(getpid());
+    std::string logfile = "/tmp/scp_smoke_report_test." + std::to_string(getpid());
     SCP_INFO() << "Constructing design";
     test toptest("top");
     test1 t1("t1");

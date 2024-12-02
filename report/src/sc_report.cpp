@@ -14,10 +14,12 @@
  * limitations under the License.
  *******************************************************************************/
 /*
- * report.cpp
+ * sc_report.cpp
  *
  *  Created on: 19.09.2017
  *      Author: eyck@minres.com
+ *
+ * THIS FILE IS INTENDED TO BE UP-STREAMED
  */
 
 #include <scp/logger.h>
@@ -47,9 +49,9 @@ std::unordered_map<uint64_t, sc_core::sc_verbosity> lut;
 thread_local std::unordered_map<uint64_t, sc_core::sc_verbosity> lut;
 #endif
 
-
 // BKDR hash algorithm
-auto char_hash(char const* str) -> uint64_t {
+auto char_hash(char const* str) -> uint64_t
+{
     constexpr unsigned int seed = 131; // 31  131 1313 13131131313 etc//
     uint64_t hash = 0;
     while (*str) {
@@ -60,16 +62,14 @@ auto char_hash(char const* str) -> uint64_t {
 }
 } // namespace
 
-sc_core::sc_verbosity scp::scp_logger_cache::get_log_verbosity_cached(
-    const char* scname, const char* tname = "") {
+sc_core::sc_verbosity scp::scp_logger_cache::get_log_verbosity_cached(const char* scname, const char* tname = "")
+{
     if (level != sc_core::SC_UNSET) {
         return level;
     }
 
-    if (!scname && features.size())
-        scname = features[0].c_str();
-    if (!scname)
-        scname = "";
+    if (!scname && features.size()) scname = features[0].c_str();
+    if (!scname) scname = "";
 
     type = std::string(scname);
 
@@ -82,15 +82,14 @@ sc_core::sc_verbosity scp::scp_logger_cache::get_log_verbosity_cached(
         }
     }
 
-    return level = static_cast<sc_core::sc_verbosity>(
-               ::sc_core::sc_report_handler::get_verbosity_level());
+    return level = static_cast<sc_core::sc_verbosity>(::sc_core::sc_report_handler::get_verbosity_level());
 }
 
-auto scp::get_log_verbosity(char const* str) -> sc_core::sc_verbosity {
+auto scp::get_log_verbosity(char const* str) -> sc_core::sc_verbosity
+{
     auto k = char_hash(str);
     auto it = lut.find(k);
-    if (it != lut.end())
-        return it->second;
+    if (it != lut.end()) return it->second;
 
     scp::scp_logger_cache tmp;
     lut[k] = tmp.get_log_verbosity_cached(str);

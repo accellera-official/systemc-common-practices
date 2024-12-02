@@ -34,8 +34,7 @@ namespace scp {
  * @param type_field_width the with of the type field in the output
  * @param print_time whether to print the system time stamp
  */
-void init_logging(log level = log::WARNING, unsigned type_field_width = 24,
-                  bool print_time = false);
+void init_logging(log level = log::WARNING, unsigned type_field_width = 24, bool print_time = false);
 /**
  * @fn void init_logging(log=log::WARNING, unsigned=24, bool=false)
  * @brief initializes the SystemC logging system with a particular logging

@@ -39,7 +39,8 @@ SC_MODULE (test) {
     }
 };
 
-int sc_main(int argc, char** argv) {
+int sc_main(int argc, char** argv)
+{
     test test1("test");
 
     sc_core::sc_start();

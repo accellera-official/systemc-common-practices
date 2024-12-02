@@ -48,7 +48,8 @@ SC_MODULE (test) {
     }
 };
 
-int sc_main(int argc, char** argv) {
+int sc_main(int argc, char** argv)
+{
     SCP_INFO() << "Constructing design";
     test test1("test");
     SCP_INFO() << "Starting simulation";

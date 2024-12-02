@@ -8,15 +8,13 @@ set(GITHUB "https://github.com/" CACHE STRING "github base url")
 include(FetchContent)
 include(CTest)
 
-FetchContent_Declare(
-  cpm-cmake
-  GIT_REPOSITORY ${GITHUB}cpm-cmake/CPM.cmake.git
-  GIT_SHALLOW True
-  GIT_TAG v0.31.1
+# download CPM.cmake
+file(
+  DOWNLOAD
+  https://github.com/cpm-cmake/CPM.cmake/releases/download/v0.40.2/CPM.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/cmake/CPM.cmake
 )
-
-FetchContent_MakeAvailable(cpm-cmake)
-include(${cpm-cmake_SOURCE_DIR}/cmake/CPM.cmake)
+include(${CMAKE_CURRENT_BINARY_DIR}/cmake/CPM.cmake)
 
 cpmaddpackage("${GITHUB}TheLartians/PackageProject.cmake.git@1.4.1")
 
@@ -60,7 +58,7 @@ if(WITH_FMT)
     NAME fmt
     GIT_REPOSITORY ${GITHUB}fmtlib/fmt.git
     GIT_SHALLOW True
-    GIT_TAG 9.1.0
+    GIT_TAG 11.0.2
     OPTIONS FMT_INSTALL "" ON
   )
 endif()
@@ -68,17 +66,17 @@ endif()
 FetchContent_Declare(
   spdlog_git
   GIT_REPOSITORY "https://github.com/gabime/spdlog.git"
-  GIT_TAG "v1.9.2"
+  GIT_TAG "v1.15.0"
   GIT_SHALLOW ON
 )
-FetchContent_Populate(spdlog_git)
+FetchContent_MakeAvailable(spdlog_git)
 FetchContent_GetProperties(
   spdlog_git
   SOURCE_DIR spdlog_git_SRC_DIR
   POPULATED spdlog_git_FOUND
 )
 
-add_library(${PROJECT_NAME} src/report.cpp src/logger.cpp)
+add_library(${PROJECT_NAME} src/sc_report.cpp src/logger.cpp)
 target_include_directories(
   ${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -92,7 +90,6 @@ endif()
 target_include_directories(${PROJECT_NAME} PRIVATE ${spdlog_git_SRC_DIR}/include)
 
 if(TARGET SystemC::cci)
-  target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_CCI)
   target_link_libraries(${PROJECT_NAME} PUBLIC SystemC::cci)
 endif()
 
@@ -100,10 +97,10 @@ target_link_libraries(${PROJECT_NAME} PUBLIC SystemC::systemc)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 # No tests yet. WIP.
-# if(BUILD_TESTING AND ("${PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}"))
-# enable_testing()
-# add_subdirectory(tests)
-# endif()
+if(BUILD_TESTING AND ("${PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}"))
+enable_testing()
+add_subdirectory(tests)
+endif()
 add_library("scp::report::lib${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
 packageproject(
   NAME "${PROJECT_NAME}"

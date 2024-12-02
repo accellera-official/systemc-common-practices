@@ -13,18 +13,15 @@
   permissions and limitations under the License.
  ****************************************************************************/
 
-#include <scp/tlm_extensions/initiator_id.h>
-#include <scp/tlm_extensions/path_trace.h>
-#include <scp/logger.h>
+#include <scp/report.h>
 #include <scp/report_cci_setter.h>
-
 #include <systemc>
-#include <tlm>
 #include <cci_configuration>
 
 #include <cstdio>
 #include <string>
 #include <fstream>
+#include <streambuf>
 #include <unistd.h>
 
 SC_MODULE (test4) {
@@ -95,36 +92,12 @@ SC_MODULE (test) {
     outside_class oc;
     SC_CTOR (test) {
         SCP_DEBUG(SCMOD) << "First part";
-        scp::tlm_extensions::path_trace ext;
-        ext.stamp(this);
-        SCP_INFO(SCMOD) << ext.to_string();
-        ext.reset();
 
-        ext.stamp(this);
-        ext.stamp(this);
-        ext.stamp(this);
-
-        SCP_INFO(SCMOD) << ext.to_string();
-        ext.reset();
-
-        SCP_DEBUG(SCMOD) << "Second part";
-        scp::tlm_extensions::initiator_id mid(0x1234);
-        mid = 0x2345;
-        mid &= 0xff;
-        mid <<= 4;
-        uint64_t myint = mid + mid;
-        myint += mid;
-        if (mid == 0x450) {
-            SC_REPORT_INFO("ext test", "Success");
-        } else {
-            SC_REPORT_INFO("ext test", "Failour");
-        }
-
-        SCP_INFO() << "Globally cached version empty";
-        SCP_INFO(())("FMT String : Locally cached version default");
-        SCP_INFO(SCMOD) << "Globally cached version feature using SCMOD macro";
-        SCP_INFO((m_my_logger)) << "Locally cached version using (m_my_logger)";
-        SCP_INFO((D)) << "Locally cached version with D";
+        SCP_INFO() << "Uncached version empty";
+        SCP_INFO(())("FMT String : Cached version default");
+        SCP_INFO(SCMOD) << "UnCached version feature using SCMOD macro";
+        SCP_INFO((m_my_logger)) << "Cached version using (m_my_logger)";
+        SCP_INFO((D)) << "Cached version with D";
     }
 
     SCP_LOGGER((m_my_logger));
@@ -158,13 +131,15 @@ int sc_main(int argc, char** argv)
     SCP_INFO() << "Constructing design";
     test toptest("top");
     test1 t1("t1");
-
+    for (auto n : cci_logger.get_logging_parameters()) {
+        SCP_INFO()("{}", n);
+    }
     SCP_INFO() << "Starting simulation";
     sc_core::sc_start();
     SCP_WARN() << "Ending simulation";
 
 #ifdef FMT_SHARED
-    std::string fmtstr = "FMT String : Locally cached version default";
+    std::string fmtstr = "FMT String : Cached version default";
 #else
     std::string fmtstr = "Please add FMT library for FMT support.";
 #endif
@@ -174,16 +149,11 @@ int sc_main(int argc, char** argv)
 [    info] [                0 s ]out.class           : constructor
 [ warning] [                0 s ]out.class           : constructor
 [   debug] [                0 s ]top                 : First part
-[    info] [                0 s ]top                 : top
-[    info] [                0 s ]top                 : top->top->top
-[   debug] [                0 s ]top                 : Second part
-[    info] [                0 s ]ext test            : Success
-[    info] [                0 s ]SystemC             : Globally cached version empty
-[    info] [                0 s ]top                 : )" +
-        fmtstr + R"(
-[    info] [                0 s ]top                 : Globally cached version feature using SCMOD macro
-[    info] [                0 s ]top                 : Locally cached version using (m_my_logger)
-[    info] [                0 s ]top                 : Locally cached version with D
+[    info] [                0 s ]SystemC             : Uncached version empty
+[    info] [                0 s ]top                 : FMT String : Cached version default
+[    info] [                0 s ]top                 : UnCached version feature using SCMOD macro
+[    info] [                0 s ]top                 : Cached version using (m_my_logger)
+[    info] [                0 s ]top                 : Cached version with D
 [    info] [                0 s ]t1.t2.t3_1          :  .  T3 D Logger "other" "feature.one"
 [ warning] [                0 s ]t1.t2.t3_1          :  .  T3 D Logger "other" "feature.one"
 [    info] [                0 s ]t1.t2.t3_1          :  .  T3 Logger ()
@@ -201,6 +171,69 @@ int sc_main(int argc, char** argv)
 [    info] [                0 s ]t1                  : Thing1?
 [ warning] [                0 s ]t1                  : Thing1?
 [ warning] [                0 s ]t1                  : Thing2?
+[    info] [                0 s ]SystemC             : .log_level
+[    info] [                0 s ]SystemC             : else.log_level
+[    info] [                0 s ]SystemC             : feature.log_level
+[    info] [                0 s ]SystemC             : feature.one.log_level
+[    info] [                0 s ]SystemC             : other.log_level
+[    info] [                0 s ]SystemC             : out.class.log_level
+[    info] [                0 s ]SystemC             : out.class.out.class.log_level
+[    info] [                0 s ]SystemC             : out.class.out.log_level
+[    info] [                0 s ]SystemC             : out.class.outside_class.log_level
+[    info] [                0 s ]SystemC             : out.class.thing1.log_level
+[    info] [                0 s ]SystemC             : out.log_level
+[    info] [                0 s ]SystemC             : out.out.class.log_level
+[    info] [                0 s ]SystemC             : out.out.log_level
+[    info] [                0 s ]SystemC             : out.outside_class.log_level
+[    info] [                0 s ]SystemC             : out.thing1.log_level
+[    info] [                0 s ]SystemC             : outside_class.log_level
+[    info] [                0 s ]SystemC             : some.log_level
+[    info] [                0 s ]SystemC             : something.log_level
+[    info] [                0 s ]SystemC             : t1.else.log_level
+[    info] [                0 s ]SystemC             : t1.feature.log_level
+[    info] [                0 s ]SystemC             : t1.feature.one.log_level
+[    info] [                0 s ]SystemC             : t1.log_level
+[    info] [                0 s ]SystemC             : t1.other.log_level
+[    info] [                0 s ]SystemC             : t1.some.log_level
+[    info] [                0 s ]SystemC             : t1.something.log_level
+[    info] [                0 s ]SystemC             : t1.t2.feature.log_level
+[    info] [                0 s ]SystemC             : t1.t2.feature.one.log_level
+[    info] [                0 s ]SystemC             : t1.t2.log_level
+[    info] [                0 s ]SystemC             : t1.t2.other.log_level
+[    info] [                0 s ]SystemC             : t1.t2.t3_1.feature.log_level
+[    info] [                0 s ]SystemC             : t1.t2.t3_1.feature.one.log_level
+[    info] [                0 s ]SystemC             : t1.t2.t3_1.log_level
+[    info] [                0 s ]SystemC             : t1.t2.t3_1.other.log_level
+[    info] [                0 s ]SystemC             : t1.t2.t3_1.test3.log_level
+[    info] [                0 s ]SystemC             : t1.t2.t3_2.feature.log_level
+[    info] [                0 s ]SystemC             : t1.t2.t3_2.feature.one.log_level
+[    info] [                0 s ]SystemC             : t1.t2.t3_2.log_level
+[    info] [                0 s ]SystemC             : t1.t2.t3_2.other.log_level
+[    info] [                0 s ]SystemC             : t1.t2.t3_2.test3.log_level
+[    info] [                0 s ]SystemC             : t1.t2.t4.log_level
+[    info] [                0 s ]SystemC             : t1.t2.t4.test4.log_level
+[    info] [                0 s ]SystemC             : t1.t2.test2.log_level
+[    info] [                0 s ]SystemC             : t1.t2.test3.log_level
+[    info] [                0 s ]SystemC             : t1.t2.test4.log_level
+[    info] [                0 s ]SystemC             : t1.test1.log_level
+[    info] [                0 s ]SystemC             : t1.test2.log_level
+[    info] [                0 s ]SystemC             : t1.test3.log_level
+[    info] [                0 s ]SystemC             : t1.test4.log_level
+[    info] [                0 s ]SystemC             : t1.thing1.log_level
+[    info] [                0 s ]SystemC             : t1.thing2.log_level
+[    info] [                0 s ]SystemC             : test.log_level
+[    info] [                0 s ]SystemC             : test1.log_level
+[    info] [                0 s ]SystemC             : test2.log_level
+[    info] [                0 s ]SystemC             : test3.log_level
+[    info] [                0 s ]SystemC             : test4.log_level
+[    info] [                0 s ]SystemC             : thing1.log_level
+[    info] [                0 s ]SystemC             : thing2.log_level
+[    info] [                0 s ]SystemC             : top..log_level
+[    info] [                0 s ]SystemC             : top.feature.log_level
+[    info] [                0 s ]SystemC             : top.feature.one.log_level
+[    info] [                0 s ]SystemC             : top.log_level
+[    info] [                0 s ]SystemC             : top.other.log_level
+[    info] [                0 s ]SystemC             : top.test.log_level
 [    info] [                0 s ]SystemC             : Starting simulation
 [ warning] [                0 s ]SystemC             : Ending simulation
 )";

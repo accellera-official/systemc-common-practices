@@ -22,7 +22,8 @@
 #include <tlm>
 
 namespace scp {
-static std::string scp_txn_tostring(tlm::tlm_generic_payload& trans) {
+static std::string scp_txn_tostring(tlm::tlm_generic_payload& trans)
+{
     std::stringstream info;
     const char* cmd = "UNKOWN";
     switch (trans.get_command()) {
@@ -42,8 +43,7 @@ static std::string scp_txn_tostring(tlm::tlm_generic_payload& trans) {
     unsigned char* ptr = trans.get_data_ptr();
     info << " data: 0x";
     for (int i = trans.get_data_length(); i; i--) {
-        info << std::setw(2) << std::setfill('0') << std::hex
-             << (unsigned int)(ptr[i - 1]);
+        info << std::setw(2) << std::setfill('0') << std::hex << (unsigned int)(ptr[i - 1]);
     }
     info << " status: " << trans.get_response_string() << " ";
     for (unsigned int i = 0; i < tlm::max_num_extensions(); i++) {
