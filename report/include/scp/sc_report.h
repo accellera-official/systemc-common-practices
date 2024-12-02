@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-
+/*
+ *
+ * THIS FILE IS INTENDED TO BE UP-STREAMED
+ */
 #ifndef _SCP_REPORT_H_
 #define _SCP_REPORT_H_
 
@@ -158,10 +161,10 @@ struct scp_logger_cache {
     sc_core::sc_verbosity get_log_verbosity_cached(const char*, const char*);
 };
 
-struct scp_global_logger_handler :  sc_core::sc_object {
+struct scp_global_logger_handler : sc_core::sc_object {
     virtual sc_core::sc_verbosity operator()(struct scp_logger_cache& logger,
-                                     const char* scname,
-                                     const char* tname) const =0;
+                                             const char* scname,
+                                             const char* tname) const = 0;
 };
 
 inline sc_core::sc_verbosity get_log_verbosity() {
@@ -221,7 +224,7 @@ struct ScLogger {
      * @param verbosity the log level
      */
     ScLogger(const char* file, int line, int verbosity = sc_core::SC_MEDIUM):
-        t(nullptr), file(file), line(line), level(verbosity){};
+        t(nullptr), file(file), line(line), level(verbosity) {};
 
     ScLogger() = delete;
 

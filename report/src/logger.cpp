@@ -26,11 +26,6 @@
 #include <fstream>
 #include <systemc>
 #include <iomanip>
-#ifdef HAS_CCI
-#include <systemc>
-#include <cci_configuration>
-#include "scp/report_cci_setter.h"
-#endif
 #include <mutex>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>

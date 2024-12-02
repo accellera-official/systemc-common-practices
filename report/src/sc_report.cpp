@@ -14,10 +14,12 @@
  * limitations under the License.
  *******************************************************************************/
 /*
- * report.cpp
+ * sc_report.cpp
  *
  *  Created on: 19.09.2017
  *      Author: eyck@minres.com
+ *
+ * THIS FILE IS INTENDED TO BE UP-STREAMED
  */
 
 #include <scp/logger.h>
@@ -46,7 +48,6 @@ std::unordered_map<uint64_t, sc_core::sc_verbosity> lut;
 #else
 thread_local std::unordered_map<uint64_t, sc_core::sc_verbosity> lut;
 #endif
-
 
 // BKDR hash algorithm
 auto char_hash(char const* str) -> uint64_t {
