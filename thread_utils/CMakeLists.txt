@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
-project(initiator_id VERSION 1.0 LANGUAGES CXX C)
+project(thread_utils VERSION 1.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ standard to build all targets.")
 
@@ -21,11 +21,21 @@ include(${cpm-cmake_SOURCE_DIR}/cmake/CPM.cmake)
 cpmaddpackage("${GITHUB}TheLartians/PackageProject.cmake.git@1.4.1")
 
 cpmaddpackage(
-   NAME SystemCLanguage
-   GIT_REPOSITORY  ${GITHUB}accellera-official/systemc.git
-   GIT_SHALLOW True
-   GIT_TAG main
+  NAME SystemCLanguage
+  GIT_REPOSITORY  ${GITHUB}accellera-official/systemc.git
+  GIT_SHALLOW True
+  GIT_TAG main
 )
+
+# upstream set INSTALL_NAME_DIR wrong !
+if (APPLE)
+  set_target_properties(
+    systemc
+    PROPERTIES
+    INSTALL_NAME_DIR "@rpath"
+  )
+endif()
+
 
 add_library(${PROJECT_NAME} INTERFACE)
 
@@ -40,11 +50,11 @@ if(BUILD_TESTING AND ("${PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}"))
    add_subdirectory(tests)
 endif()
 
-add_library("scp::tlm_extensions::lib${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
+add_library("scp::thread_utils::lib${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
 packageproject(
    NAME "${PROJECT_NAME}"
    VERSION ${PROJECT_VERSION}
-   NAMESPACE scp::tlm_extensions
+   NAMESPACE scp
    BINARY_DIR ${PROJECT_BINARY_DIR}
    INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include
    INCLUDE_DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
@@ -57,4 +67,3 @@ install(
    COMPONENT "${PROJECT_NAME}_Runtime"
    NAMELINK_COMPONENT "${PROJECT_NAME}_Development"
 )
-

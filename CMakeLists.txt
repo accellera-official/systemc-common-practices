@@ -12,7 +12,7 @@ FetchContent_Declare(
   cpm-cmake
   GIT_REPOSITORY ${GITHUB}cpm-cmake/CPM.cmake.git
   GIT_SHALLOW True
-  GIT_TAG v0.31.1
+  GIT_TAG v0.40.2
 )
 
 FetchContent_MakeAvailable(cpm-cmake)
@@ -39,7 +39,10 @@ cpmaddpackage(
   NAME report
   SOURCE_DIR ${PROJECT_SOURCE_DIR}/report
 )
-
+cpmaddpackage(
+  NAME thread_utils
+  SOURCE_DIR ${PROJECT_SOURCE_DIR}/thread_utils
+)
 if("${PROJECT_NAME}" STREQUAL "${CMAKE_PROJECT_NAME}")
   add_subdirectory(examples)
   if(BUILD_TESTING)
