@@ -16,7 +16,7 @@
 #ifndef _SCP_REPORT_CCI_SETTER_H_
 #define _SCP_REPORT_CCI_SETTER_H_
 
-#include <scp/report.h>
+#include <scp/sc_report.h>
 #include <cci_configuration>
 #include <type_traits>
 #include <regex>

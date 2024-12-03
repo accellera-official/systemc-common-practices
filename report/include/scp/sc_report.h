@@ -310,20 +310,20 @@ protected:
 /********/
 
 /* default logger cache name */
-#define SCP_LOGGER_NAME(x) CAT(_m_scp_log_level_cache_, x)
+#define SCP_REPORTER_NAME(x) CAT(_m_scp_log_level_cache_, x)
 
 /* User interface macros */
 #define SCMOD this->sc_core::sc_module::name()
-#define SCP_LOGGER(...)                                            \
-    scp::scp_logger_cache IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))(   \
-        SCP_LOGGER_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__))), \
-        SCP_LOGGER_NAME()) = { sc_core::SC_UNSET,                  \
-                               "",                                 \
-                               { IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))(POP_ARG(__VA_ARGS__), ##__VA_ARGS__) } }
+#define SCP_REPORTER(...)                                            \
+    scp::scp_logger_cache IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))(     \
+        SCP_REPORTER_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__))), \
+        SCP_REPORTER_NAME()) = { sc_core::SC_UNSET,                  \
+                                 "",                                 \
+                                 { IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))(POP_ARG(__VA_ARGS__), ##__VA_ARGS__) } }
 
-#define SCP_LOGGER_VECTOR(NAME) std::vector<scp::scp_logger_cache> SCP_LOGGER_NAME(NAME)
-#define SCP_LOGGER_VECTOR_PUSH_BACK(NAME, ...) \
-    SCP_LOGGER_NAME(NAME).push_back({ sc_core::SC_UNSET, "", { __VA_ARGS__ } });
+#define SCP_REPORTER_VECTOR(NAME) std::vector<scp::scp_logger_cache> SCP_REPORTER_NAME(NAME)
+#define SCP_REPORTER_VECTOR_PUSH_BACK(NAME, ...) \
+    SCP_REPORTER_NAME(NAME).push_back({ sc_core::SC_UNSET, "", { __VA_ARGS__ } });
 
 class call_sc_name_fn
 {
@@ -363,14 +363,14 @@ public:
 
 #define SCP_VBSTY_CHECK_UNCACHED(lvl, ...) (::scp::get_log_verbosity(__VA_ARGS__) >= lvl)
 
-#define SCP_VBSTY_CHECK(lvl, ...)                                                                                    \
-    IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))                                                                            \
-    (SCP_VBSTY_CHECK_CACHED(lvl, FIRST_ARG(__VA_ARGS__), SCP_LOGGER_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__)))), \
+#define SCP_VBSTY_CHECK(lvl, ...)                                                                                      \
+    IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))                                                                              \
+    (SCP_VBSTY_CHECK_CACHED(lvl, FIRST_ARG(__VA_ARGS__), SCP_REPORTER_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__)))), \
      SCP_VBSTY_CHECK_UNCACHED(lvl, ##__VA_ARGS__))
 
-#define SCP_GET_FEATURES(...)                                                                                  \
-    IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))                                                                      \
-    (FIRST_ARG EXPAND((POP_ARG(__VA_ARGS__, SCP_LOGGER_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__))).type))), \
+#define SCP_GET_FEATURES(...)                                                                                    \
+    IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))                                                                        \
+    (FIRST_ARG EXPAND((POP_ARG(__VA_ARGS__, SCP_REPORTER_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__))).type))), \
      __VA_ARGS__)
 
 #ifdef FMT_SHARED

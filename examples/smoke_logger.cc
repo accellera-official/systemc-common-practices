@@ -17,6 +17,7 @@
 #include <scp/tlm_extensions/path_trace.h>
 #include <scp/logger.h>
 #include <scp/report_cci_setter.h>
+#include <fmt/format.h>
 
 #include <systemc>
 #include <tlm>
@@ -34,7 +35,7 @@ SC_MODULE (test4) {
         SCP_INFO(()) << " .   T4 Logger() 2";
         SCP_WARN(()) << " .   T4 Logger() 2";
     }
-    SCP_LOGGER();
+    SCP_REPORTER();
 };
 
 SC_MODULE (test3) {
@@ -44,8 +45,8 @@ SC_MODULE (test3) {
         SCP_INFO(()) << " .  T3 Logger ()";
         SCP_WARN(()) << " .  T3 Logger ()";
     }
-    SCP_LOGGER((D), "other", "feature.one");
-    SCP_LOGGER(());
+    SCP_REPORTER((D), "other", "feature.one");
+    SCP_REPORTER(());
 };
 
 SC_MODULE (test2) {
@@ -54,7 +55,7 @@ SC_MODULE (test2) {
             SCP_INFO(()) << "  T2 Logger()";
             SCP_WARN(()) << "  T2 Logger()";
         }
-    SCP_LOGGER();
+    SCP_REPORTER();
     test3 t31, t32;
     test4 t4;
 };
@@ -66,22 +67,22 @@ SC_MODULE (test1) {
             SCP_INFO(()) << " T1 Logger()";
             SCP_WARN(()) << " T1 Logger()";
 
-            SCP_LOGGER_VECTOR_PUSH_BACK(vec, "some", "thing1");
-            SCP_LOGGER_VECTOR_PUSH_BACK(vec, "some", "thing2");
+            SCP_REPORTER_VECTOR_PUSH_BACK(vec, "some", "thing1");
+            SCP_REPORTER_VECTOR_PUSH_BACK(vec, "some", "thing2");
 
             SCP_INFO((vec[0])) << "Thing1?";
             SCP_WARN((vec[0])) << "Thing1?";
             SCP_INFO((vec[1])) << "Thing2?";
             SCP_WARN((vec[1])) << "Thing2?";
         }
-    SCP_LOGGER("something", "else");
-    SCP_LOGGER_VECTOR(vec);
+    SCP_REPORTER("something", "else");
+    SCP_REPORTER_VECTOR(vec);
     test2 t2;
 };
 
 class outside_class
 {
-    SCP_LOGGER("out.class", "thing1");
+    SCP_REPORTER("out.class", "thing1");
 
 public:
     outside_class()
@@ -127,10 +128,10 @@ SC_MODULE (test) {
         SCP_INFO((D)) << "Locally cached version with D";
     }
 
-    SCP_LOGGER((m_my_logger));
-    SCP_LOGGER(());
-    SCP_LOGGER((1), "other");
-    SCP_LOGGER((D), "other", "feature.one");
+    SCP_REPORTER((m_my_logger));
+    SCP_REPORTER(());
+    SCP_REPORTER((1), "other");
+    SCP_REPORTER((D), "other", "feature.one");
 };
 
 int sc_main(int argc, char** argv)

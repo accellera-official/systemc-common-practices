@@ -4,6 +4,11 @@
 #include "scp/helpers.h"
 #include "scp/logger.h"
 
+#define SCP_LOGGER(...)                  SCP_REPORTER(__VA_ARGS__)
+#define SCP_LOGGER_NAME(...)             SCP_REPORTER_NAME(__VA_ARGS__)
+#define SCP_LOGGER_VECTOR(...)           SCP_REPORTER_VECTOR(__VA_ARGS__)
+#define SCP_LOGGER_VECTOR_PUSH_BACK(...) SCP_REPORTER_VECTOR_PUSH_BACK(__VA_ARGS__)
+
 #ifdef FMT_SHARED
 #ifndef _FMT_CONVENIENCE_DEFINED
 #define _FMT_CONVENIENCE_DEFINED
