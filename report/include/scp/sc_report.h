@@ -224,7 +224,7 @@ struct ScLogger {
      * @brief the destructor generating the SystemC report
      *
      */
-    virtual ~ScLogger()
+    virtual ~ScLogger() noexcept(false)
     {
         ::sc_core::sc_report_handler::report(SEVERITY, t ? t : "SystemC", os.str().c_str(), level, file, line);
     }
