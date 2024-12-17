@@ -1,4 +1,11 @@
+NB the TROW actions in sc_report handler should be marked as deprecated, and users encouraged to calling throw as appropriate in their user code. This removes the ambiguity about whether and what a report handler would throw.
 
+# Overview
+The Logging interface provides a short lived streaming object which collects the information required for logging, and will then pass that to a sc_report_handler. This object should not be used directly, rather the macros described below should be preferred.
+
+***The logging interface should _NOT_ be used to cause exceptions to be thrown, this should be handled in user code (The underlying sc_report_handler SC_THROW action is deprecated and will be ignored). ***
+
+A set of convenience macros are provided. 
 
 ## Reporting macros
 

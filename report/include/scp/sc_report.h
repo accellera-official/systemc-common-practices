@@ -223,10 +223,15 @@ struct ScLogger {
      * @fn  ~ScLogger()
      * @brief the destructor generating the SystemC report
      *
+     * NB a destructor should not throw an exception, here we attempt to prevent the sc_report_handler from throwing
+     * The ScLogging interface is _ONLY_ for logging, simulation control should happen in user code.
      */
-    virtual ~ScLogger() noexcept(false)
+    virtual ~ScLogger() noexcept(true)
     {
+        auto old = sc_core::sc_report_handler::set_actions(sc_core::SC_ERROR);
+        sc_core::sc_report_handler::set_actions(sc_core::SC_ERROR, old &= !sc_core::SC_THROW);
         ::sc_core::sc_report_handler::report(SEVERITY, t ? t : "SystemC", os.str().c_str(), level, file, line);
+        sc_core::sc_report_handler::set_actions(sc_core::SC_ERROR, old);
     }
     /**
      * @fn ScLogger& type()
