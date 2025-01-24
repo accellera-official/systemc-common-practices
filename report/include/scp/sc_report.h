@@ -24,6 +24,7 @@
 #include <iostream>
 #include <sstream>
 #include <array>
+#include <map>
 #include <vector>
 
 #ifdef __GNUG__
@@ -38,26 +39,16 @@
 #if defined(_MSC_VER) && defined(ERROR)
 #undef ERROR
 #endif
-static const std::array<sc_core::sc_severity, 8> severity = {
-    sc_core::SC_FATAL,   // scp::log::NONE
-    sc_core::SC_FATAL,   // scp::log::FATAL
-    sc_core::SC_ERROR,   // scp::log::ERROR
-    sc_core::SC_WARNING, // scp::log::WARNING
-    sc_core::SC_INFO,    // scp::log::INFO
-    sc_core::SC_INFO,    // scp::log::DEBUG
-    sc_core::SC_INFO,    // scp::log::TRACE
-    sc_core::SC_INFO     // scp::log::TRACEALL
-};
-static const std::array<sc_core::sc_verbosity, 8> verbosity = {
-    sc_core::SC_NONE,   // scp::log::NONE
-    sc_core::SC_LOW,    // scp::log::FATAL
-    sc_core::SC_LOW,    // scp::log::ERROR
-    sc_core::SC_LOW,    // scp::log::WARNING
-    sc_core::SC_MEDIUM, // scp::log::INFO
-    sc_core::SC_HIGH,   // scp::log::DEBUG
-    sc_core::SC_FULL,   // scp::log::TRACE
-    sc_core::SC_DEBUG   // scp::log::TRACEALL
-};
+
+/* In SystemC there are 2 'scales' the severity which is INFO, WARNING, ERROR and FATAL.
+ * And Verbosity which is a sub-division of INFO (NONE, LOW, MEDIUM, HIGH, FULL and DEBUG)
+ *
+ * Here we add Loging levels:
+ *   CRITICAL, WARN,      INFO,      TRACE and    FULL.
+ * Which correspond to the Verbosity levels
+ *   SC_NONE, SC_LOW,     SC_MEDIUM, SC_HIGH and  SC_FULL
+ */
+
 namespace sc_core {
 const sc_core::sc_verbosity SC_UNSET = (sc_core::sc_verbosity)INT_MAX;
 }
@@ -75,25 +66,64 @@ static const char* _SCP_FMT_EMPTY_STR = "";
 /**@{*/
 //! @brief reporting  utilities
 namespace scp {
-//! \brief array holding string representations of log levels
-static std::array<const char* const, 8> buffer = { { "NONE", "FATAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE",
-                                                     "TRACEALL" } };
-//! \brief enum defining the log levels
-enum class log { NONE, FATAL, ERROR, WARNING, INFO, DEBUG, TRACE, TRACEALL, DBGTRACE = TRACEALL };
+
+/************************
+ * Provide a set of names and conversions that are suitable for logging levels based on
+ * SystemC "verbosity's"
+ ************************/
+
+enum class log {
+    NONE = sc_core::SC_NONE,
+    CRITICAL = sc_core::SC_NONE,
+    WARN = sc_core::SC_LOW,
+    INFO = sc_core::SC_MEDIUM,
+    TRACE = sc_core::SC_HIGH,
+    FULL = sc_core::SC_DEBUG,
+
+    DEBUG = sc_core::SC_HIGH,
+    DBGTRACE = sc_core::SC_DEBUG // Only for backward compatibility
+};
+inline std::map<log, std::string> log_map()
+{
+    static std::map<log, std::string> m = {
+        { log::NONE, "NONE" }, { log::CRITICAL, "CRITICAL" }, { log::WARN, "WARN" },
+        { log::INFO, "INFO" }, { log::TRACE, "TRACE" },       { log::FULL, "FULL" }
+    };
+    return m;
+}
 
 /**
- * @fn log as_log(int)
- * @brief safely convert an integer into a log level
+ * @fn log as_log(sc_verbosity)
+ * @brief safely convert an sc_verbosity (integer) into a log level
  *
  * @param logLevel the logging level
  * @return the log level
  */
-inline log as_log(int logLevel)
+inline log as_log(sc_core::sc_verbosity logLevel)
 {
-    assert(logLevel >= static_cast<int>(log::NONE) && logLevel <= static_cast<int>(log::TRACEALL));
-    std::array<const log, 8> m = { { log::NONE, log::FATAL, log::ERROR, log::WARNING, log::INFO, log::DEBUG, log::TRACE,
-                                     log::TRACEALL } };
-    return m[logLevel];
+    auto m = log_map();
+    for (auto l : m) {
+        if (logLevel <= static_cast<int>(l.first)) {
+            return l.first;
+        }
+    }
+    return log::FULL;
+}
+
+/**
+ * @fn log as_log(std::string)
+ * @brief safely convert a string into a log level
+ *
+ * @param logName the string name for the log level
+ * @return the log level
+ */
+inline log as_log(std::string logName)
+{
+    auto m = log_map();
+    for (auto l : m) {
+        if (logName == l.second) return l.first;
+    }
+    sc_assert(false);
 }
 /**
  * @fn std::istream& operator >>(std::istream&, log&)
@@ -107,12 +137,7 @@ inline std::istream& operator>>(std::istream& is, log& val)
 {
     std::string buf;
     is >> buf;
-    for (auto i = 0U; i <= static_cast<unsigned>(log::TRACEALL); ++i) {
-        if (std::strcmp(buf.c_str(), buffer[i]) == 0) {
-            val = as_log(i);
-            return is;
-        }
-    }
+    val = as_log(buf);
     return is;
 }
 /**
@@ -125,9 +150,12 @@ inline std::istream& operator>>(std::istream& is, log& val)
  */
 inline std::ostream& operator<<(std::ostream& os, log const& val)
 {
-    os << buffer[static_cast<unsigned>(val)];
+    auto m = log_map();
+    os << m[val];
     return os;
 }
+
+/******************/
 
 /**
  * @brief cached logging information used in the (logger) form.
@@ -195,7 +223,7 @@ std::vector<std::string> get_logging_parameters();
  *
  * @tparam SEVERITY
  */
-template <sc_core::sc_severity SEVERITY>
+template <sc_core::sc_severity SEVERITY, bool WITH_ACTIONS = false>
 struct ScLogger {
     /**
      * @fn  ScLogger(const char*, int, int=sc_core::SC_MEDIUM)
@@ -228,10 +256,13 @@ struct ScLogger {
      */
     virtual ~ScLogger() noexcept(true)
     {
-        auto old = sc_core::sc_report_handler::set_actions(sc_core::SC_ERROR);
-        sc_core::sc_report_handler::set_actions(sc_core::SC_ERROR, old &= !sc_core::SC_THROW);
+        auto old = sc_core::sc_report_handler::set_actions(SEVERITY);
+        if (WITH_ACTIONS == false) {
+            sc_core::sc_report_handler::set_actions(
+                SEVERITY, old & ~(sc_core::SC_THROW | sc_core::SC_INTERRUPT | sc_core::SC_STOP | sc_core::SC_ABORT));
+        }
         ::sc_core::sc_report_handler::report(SEVERITY, t ? t : "SystemC", os.str().c_str(), level, file, line);
-        sc_core::sc_report_handler::set_actions(sc_core::SC_ERROR, old);
+        sc_core::sc_report_handler::set_actions(SEVERITY, old);
     }
     /**
      * @fn ScLogger& type()
@@ -384,48 +415,32 @@ public:
 #define _SCP_FMT_EMPTY_STR(...) "Please add FMT library for FMT support."
 #endif
 
-#define SCP_LOG(lvl, ...)                                                                                       \
-    ::scp::ScLogger<::sc_core::SC_INFO>(__FILE__, __LINE__, lvl / 10).type(SCP_GET_FEATURES(__VA_ARGS__)).get() \
+#define SCP_MSG(lvl, ...)                                                                                         \
+    ::scp::ScLogger<::sc_core::SC_INFO, false>(__FILE__, __LINE__, lvl).type(SCP_GET_FEATURES(__VA_ARGS__)).get() \
         << _SCP_FMT_EMPTY_STR
 /*** End HELPER Macros *******/
 
-//! macro for debug trace level output
-#define SCP_TRACEALL(...) \
-    if (SCP_VBSTY_CHECK(sc_core::SC_DEBUG, ##__VA_ARGS__)) SCP_LOG(sc_core::SC_DEBUG, __VA_ARGS__)
-//! macro for trace level output
-#define SCP_TRACE(...) \
-    if (SCP_VBSTY_CHECK(sc_core::SC_FULL, ##__VA_ARGS__)) SCP_LOG(sc_core::SC_FULL, __VA_ARGS__)
-//! macro for debug level output
-#define SCP_DEBUG(...) \
-    if (SCP_VBSTY_CHECK(sc_core::SC_HIGH, ##__VA_ARGS__)) SCP_LOG(sc_core::SC_HIGH, __VA_ARGS__)
-//! macro for info level output
-#define SCP_INFO(...) \
-    if (SCP_VBSTY_CHECK(sc_core::SC_MEDIUM, ##__VA_ARGS__)) SCP_LOG(sc_core::SC_MEDIUM, __VA_ARGS__)
-//! macro for warning level output
-#define SCP_WARN(...)                                                              \
-    if (SCP_VBSTY_CHECK(sc_core::SC_LOW, ##__VA_ARGS__))                           \
-    ::scp::ScLogger<::sc_core::SC_WARNING>(__FILE__, __LINE__, sc_core::SC_MEDIUM) \
-            .type(SCP_GET_FEATURES(__VA_ARGS__))                                   \
-            .get()                                                                 \
-        << _SCP_FMT_EMPTY_STR
-//! macro for error level output
-#define SCP_ERR(...)                                                             \
-    ::scp::ScLogger<::sc_core::SC_ERROR>(__FILE__, __LINE__, sc_core::SC_MEDIUM) \
-            .type(SCP_GET_FEATURES(__VA_ARGS__))                                 \
-            .get()                                                               \
-        << _SCP_FMT_EMPTY_STR
-//! macro for fatal message output
-#define SCP_FATAL(...)                                                           \
-    ::scp::ScLogger<::sc_core::SC_FATAL>(__FILE__, __LINE__, sc_core::SC_MEDIUM) \
-            .type(SCP_GET_FEATURES(__VA_ARGS__))                                 \
-            .get()                                                               \
-        << _SCP_FMT_EMPTY_STR
+#define SCP_LOG(lvl, ...) \
+    if (SCP_VBSTY_CHECK(lvl, ##__VA_ARGS__)) SCP_MSG(lvl, __VA_ARGS__)
 
-#ifdef NDEBUG
-#define SCP_ASSERT(expr) ((void)0)
-#else
-#define SCP_ASSERT(expr) ((void)((expr) ? 0 : (SC_REPORT_FATAL(::sc_core::SC_ID_ASSERTION_FAILED_, #expr), 0)))
-#endif
+#define SCCRITICAL(...) SCP_LOG(log::CRITICAL, ##__VA_ARGS__)
+#define SCWARN(...)     SCP_LOG(log::WARN, ##__VA_ARGS__)
+#define SCINFO(...)     SCP_LOG(log::INFO, ##__VA_ARGS__)
+#define SCTRACE(...)    SCP_LOG(log::TRACE, ##__VA_ARGS__)
+#define SCFULL(...)     SCP_LOG(log::FULL, ##__VA_ARGS__)
+
+/* Only for backwards compatibility with SCP library */
+#define SCP_FATAL(...)                                                                                            \
+    ::scp::ScLogger<::sc_core::SC_FATAL, true>(__FILE__, __LINE__, sc_core::SC_NONE).type(SCP_GET_FEATURES(__VA_ARGS__)).get() \
+        << _SCP_FMT_EMPTY_STR
+#define SCP_ERR(...)                                                                                              \
+    ::scp::ScLogger<::sc_core::SC_ERROR, true>(__FILE__, __LINE__, sc_core::SC_NONE).type(SCP_GET_FEATURES(__VA_ARGS__)).get() \
+        << _SCP_FMT_EMPTY_STR
+#define SCP_WARN(...)     SCP_LOG(sc_core::SC_LOW, ##__VA_ARGS__)
+#define SCP_INFO(...)     SCP_LOG(sc_core::SC_MEDIUM, ##__VA_ARGS__)
+#define SCP_DEBUG(...)    SCP_LOG(sc_core::SC_HIGH, ##__VA_ARGS__)
+#define SCP_TRACE(...)    SCP_LOG(sc_core::SC_FULL, ##__VA_ARGS__)
+#define SCP_TRACEALL(...) SCP_LOG(sc_core::SC_DEBUG, ##__VA_ARGS__)
 
 } // namespace scp
 /** @} */ // end of scp-report

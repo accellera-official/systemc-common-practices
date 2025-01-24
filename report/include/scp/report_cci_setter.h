@@ -61,13 +61,17 @@ class scp_logger_from_cci : public scp_global_logger_handler
         auto param_name = (name.empty()) ? SCP_LOG_LEVEL_PARAM_NAME : name + "." SCP_LOG_LEVEL_PARAM_NAME;
         auto h = broker.get_param_handle(param_name);
         if (h.is_valid()) {
-            return verbosity.at(std::min<unsigned>(h.get_cci_value().get_int(), verbosity.size() - 1));
+            return static_cast<sc_core::sc_verbosity>(h.get_cci_value().get_int());
         } else {
             auto val = broker.get_preset_cci_value(param_name);
 
             if (val.is_int()) {
                 broker.lock_preset_value(param_name);
-                return verbosity.at(std::min<unsigned>(val.get_int(), verbosity.size() - 1));
+                return static_cast<sc_core::sc_verbosity>(val.get_int());
+            }
+            if (val.is_string()) {
+                broker.lock_preset_value(param_name);
+                return static_cast<sc_core::sc_verbosity>(scp::as_log(val.get_string()));
             }
         }
         return sc_core::SC_UNSET;

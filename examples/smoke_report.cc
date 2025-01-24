@@ -136,13 +136,13 @@ int sc_main(int argc, char** argv)
     cci_utils::consuming_broker broker("global_broker");
     cci_register_broker(broker);
     cci::cci_originator orig("config");
-    broker.set_preset_cci_value("log_level", cci::cci_value(1), orig);
-    broker.set_preset_cci_value("top.log_level", cci::cci_value(5), orig);
-    broker.set_preset_cci_value("*.t3_1.log_level", cci::cci_value(5), orig);
-    broker.set_preset_cci_value("feature.log_level", cci::cci_value(5), orig);
+    broker.set_preset_cci_value("log_level", cci::cci_value(100), orig);
+    broker.set_preset_cci_value("top.log_level", cci::cci_value(500), orig);
+    broker.set_preset_cci_value("*.t3_1.log_level", cci::cci_value(500), orig);
+    broker.set_preset_cci_value("feature.log_level", cci::cci_value(500), orig);
 
-    broker.set_preset_cci_value("test4.log_level", cci::cci_value(4), orig);
-    broker.set_preset_cci_value("thing1.log_level", cci::cci_value(5), orig);
+    broker.set_preset_cci_value("test4.log_level", cci::cci_value(400), orig);
+    broker.set_preset_cci_value("thing1.log_level", cci::cci_value(500), orig);
 
     std::string logfile = "/tmp/scp_smoke_report_test." + std::to_string(getpid());
     SCP_INFO() << "Constructing design";

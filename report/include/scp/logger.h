@@ -26,7 +26,7 @@
 //! @brief reporting backend utilities
 namespace scp {
 /**
- * @fn void init_logging(log=log::WARNING, unsigned=24, bool=false)
+ * @fn void init_logging(log=log::WARN, unsigned=24, bool=false)
  * @brief initializes the SystemC logging system with a particular logging
  * level
  *
@@ -34,9 +34,9 @@ namespace scp {
  * @param type_field_width the with of the type field in the output
  * @param print_time whether to print the system time stamp
  */
-void init_logging(log level = log::WARNING, unsigned type_field_width = 24, bool print_time = false);
+void init_logging(log level = log::WARN, unsigned type_field_width = 24, bool print_time = false);
 /**
- * @fn void init_logging(log=log::WARNING, unsigned=24, bool=false)
+ * @fn void init_logging(log=log::WARN, unsigned=24, bool=false)
  * @brief initializes the SystemC logging system with a particular logging
  * level
  *
@@ -44,7 +44,7 @@ void init_logging(log level = log::WARNING, unsigned type_field_width = 24, bool
  * @param type_field_width the with of the type field in the output
  * @param print_time whether to print the system time stamp
  */
-void reinit_logging(log level = log::WARNING);
+void reinit_logging(log level = log::WARN);
 /**
  * @struct LogConfig
  * @brief the configuration class for the logging setup
@@ -53,7 +53,7 @@ void reinit_logging(log level = log::WARNING);
  * class follows the builder pattern.
  */
 struct LogConfig {
-    log level{ log::WARNING };
+    log level{ log::WARN };
     unsigned msg_type_field_width{ 24 };
     bool print_sys_time{ false };
     bool print_sim_time{ true };

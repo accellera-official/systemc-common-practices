@@ -1,11 +1,21 @@
 NB the TROW actions in sc_report handler should be marked as deprecated, and users encouraged to calling throw as appropriate in their user code. This removes the ambiguity about whether and what a report handler would throw.
 
-# Overview
-The Logging interface provides a short lived streaming object which collects the information required for logging, and will then pass that to a sc_report_handler. This object should not be used directly, rather the macros described below should be preferred.
+#Problem Statement and proposed Solution
+
+This part of the library is intended to provide a convenient way to log information, such that it's easy to adopt and, in doing so, eases the path to code-reuse, (typically "logging libraries" are one of the key common parts which need to be included from each different code base).
+
+The goals are:
+1/ A simple interface for model writes that supports both "{fmt}" style syntax ("Hello {}","world") and also streaming syntax (<<"Hello "<<"world"). 
+2/ At the 'back end' an interface should be provided to enable run-time enabling of logging.
+3/ The interface mechanism should ensure that a single "if" is checked against the logging level prior to evaluating the full contents of the logging message, such that computationally expensive calls can be used to build the message, and will have no effect on simulation speed if they are not logged.
+
+This interface is independent of SystemC, however it works with the CCI parameter mechanism, and takes care to avoid name collisions with existing entities in SystemC.
+
+
+# Implementation details
+The current implementation of the Logging interface provides a short lived streaming object which collects the information required for logging, and will then pass that to a sc_report_handler. This object should not be used directly, rather the macros described below should be preferred.
 
 ***The logging interface should _NOT_ be used to cause exceptions to be thrown, this should be handled in user code (The underlying sc_report_handler SC_THROW action is deprecated and will be ignored). ***
-
-A set of convenience macros are provided. 
 
 ## Reporting macros
 
@@ -23,15 +33,14 @@ The Log levels used by the scp library are as follows :
 | SCP log <br /> level value | SCP_ report macro | Log levels name | Print Level | Equivelent sc_core |
 | --- | --- | --- | --- | --- |
 | 0 |   NONE    |   | sc_core::SC_NONE |
-| 1 | SCP_FATAL()    | FATAL    | sc_core::SC_LOW   | `sc_core::SC_FATAL` (Always printed)
-| 1 | SCP_ERROR()    | ERROR    | sc_core::SC_LOW   | `sc_core::SC_ERROR` (Always printed)
-| 1 | SCP_WARNING()  | WARNING  | sc_core::SC_LOW   | `sc_core::SC_WARNING`
-| 4 | SCP_INFO()     | INFO     | sc_core::SC_MEDIUM| `sc_core::SC_MEDIUM`
-| 5 | SCP_DEBUG()    | DEBUG    | sc_core::SC_HIGH  | `sc_core::SC_HIGH`
-| 6 | SCP_TRACE()    | TRACE    | sc_core::SC_FULL  | `sc_core::SC_FULL`
-| 7 | SCP_TRACEALL() | TRACEAL  | sc_core::SC_DEBUG | `sc_core::SC_DEBUG`
+| 1 | LOG_CRITICAL() | CRITICAL | sc_core::SC_LOW   | `sc_core::SC_FATAL` (Always printed)
+| 1 | LOG_WARN()     | NOTE     | sc_core::SC_LOW   | `sc_core::SC_WARNING`
+| 4 | LOG_INFO()     | INFO     | sc_core::SC_MEDIUM| `sc_core::SC_MEDIUM`
+| 5 | LOG_TRACE()    | DEBUG    | sc_core::SC_HIGH  | `sc_core::SC_HIGH`
+| 6 | LOG_FULL ()    | TRACE    | sc_core::SC_FULL  | `sc_core::SC_FULL`
 
-Hence WARNINGS will be printed if the log level is set above 1. Hence setting a log_level of 3 will print Fatal, Error and Warning messages only.
+
+Hence NOTES will be printed if the log level is set above 1. Hence setting a log_level of 3 will print Fatal, Error and Warning messages only.
 
 ## SCP_ report macros
 

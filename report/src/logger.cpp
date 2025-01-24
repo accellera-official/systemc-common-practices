@@ -192,31 +192,37 @@ auto compose_message(const sc_core::sc_report& rep, const scp::LogConfig& cfg) -
         return "";
 }
 
-inline auto get_verbosity(const sc_core::sc_report& rep) -> int
-{
-    return rep.get_verbosity() > sc_core::SC_NONE && rep.get_verbosity() < sc_core::SC_LOW ? rep.get_verbosity() * 10
-                                                                                           : rep.get_verbosity();
-}
-
 inline void log2logger(spdlog::logger& logger, const sc_core::sc_report& rep, const scp::LogConfig& cfg)
 {
     auto msg = compose_message(rep, cfg);
     if (!msg.size()) return;
     switch (rep.get_severity()) {
     case sc_core::SC_INFO:
-        switch (get_verbosity(rep)) {
-        case sc_core::SC_DEBUG:
-        case sc_core::SC_FULL:
+    {
+        int v = rep.get_verbosity();
+        if (v >= sc_core::SC_DEBUG) {
             logger.trace(msg);
             break;
-        case sc_core::SC_HIGH:
+        }
+        if (v >= sc_core::SC_HIGH) {
             logger.debug(msg);
             break;
-        default:
+        }
+        if (v >= sc_core::SC_MEDIUM) {
             logger.info(msg);
             break;
         }
+        if (v >= sc_core::SC_LOW) {
+            logger.warn(msg);
+            break;
+        }
+        if (v >= sc_core::SC_NONE) {
+            logger.error(msg);
+            break;
+        }
+        logger.critical(msg);
         break;
+    }
     case sc_core::SC_WARNING:
         logger.warn(msg);
         break;
@@ -234,26 +240,23 @@ inline void log2logger(spdlog::logger& logger, const sc_core::sc_report& rep, co
 inline void log2logger(spdlog::logger& logger, scp::log lvl, const std::string& msg)
 {
     switch (lvl) {
-    case scp::log::DBGTRACE:
-    case scp::log::TRACE:
+    case scp::log::FULL:
         logger.trace(msg);
         return;
-    case scp::log::DEBUG:
+    case scp::log::TRACE:
         logger.debug(msg);
         return;
     case scp::log::INFO:
         logger.info(msg);
         return;
-    case scp::log::WARNING:
+    case scp::log::WARN:
         logger.warn(msg);
         return;
-    case scp::log::ERROR:
+    case scp::log::CRITICAL:
         logger.error(msg);
         return;
-    case scp::log::FATAL:
-        logger.critical(msg);
-        return;
     default:
+        logger.critical(msg);
         break;
     }
 }
@@ -264,7 +267,7 @@ void report_handler(const sc_core::sc_report& rep, const sc_core::sc_actions& ac
     if (actions & sc_core::SC_DO_NOTHING) return;
     if (rep.get_severity() == sc_core::SC_INFO || !log_cfg.report_only_first_error ||
         sc_core::sc_report_handler::get_count(sc_core::SC_ERROR) < 2) {
-        if ((actions & sc_core::SC_DISPLAY) && (!log_cfg.file_logger || get_verbosity(rep) < sc_core::SC_HIGH))
+        if ((actions & sc_core::SC_DISPLAY) && (!log_cfg.file_logger || rep.get_verbosity() < sc_core::SC_HIGH))
             log2logger(*log_cfg.console_logger, rep, log_cfg);
         if ((actions & sc_core::SC_LOG) && log_cfg.file_logger) {
             scp::LogConfig lcfg(log_cfg);
@@ -286,7 +289,7 @@ void report_handler(const sc_core::sc_report& rep, const sc_core::sc_actions& ac
     }
     if (actions & sc_core::SC_THROW) {
         std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<unsigned>(log_cfg.level) * 20));
-        throw rep;
+        sc_core::sc_stop();
     }
     if (sc_core::sc_time_stamp().value() && !sc_core::sc_is_running()) {
         log_cfg.console_logger->flush();
@@ -314,7 +317,7 @@ static void configure_logging()
 
     sc_core::sc_report_handler::set_actions(sc_core::SC_ERROR, sc_core::SC_DEFAULT_ERROR_ACTIONS | sc_core::SC_DISPLAY);
     sc_core::sc_report_handler::set_actions(sc_core::SC_FATAL, sc_core::SC_DEFAULT_FATAL_ACTIONS);
-    sc_core::sc_report_handler::set_verbosity_level(verbosity[static_cast<unsigned>(log_cfg.level)]);
+    sc_core::sc_report_handler::set_verbosity_level(static_cast<unsigned>(log_cfg.level));
     sc_core::sc_report_handler::set_handler(report_handler);
     if (!spdlog_initialized) {
         spdlog::init_thread_pool(1024U,
@@ -379,7 +382,7 @@ void scp::init_logging(const scp::LogConfig& log_config)
 void scp::set_logging_level(scp::log level)
 {
     log_cfg.level = level;
-    sc_core::sc_report_handler::set_verbosity_level(verbosity[static_cast<unsigned>(level)]);
+    sc_core::sc_report_handler::set_verbosity_level(static_cast<unsigned>(level));
     log_cfg.console_logger->set_level(static_cast<spdlog::level::level_enum>(
         SPDLOG_LEVEL_OFF - std::min<int>(SPDLOG_LEVEL_OFF, static_cast<int>(log_cfg.level))));
 }
