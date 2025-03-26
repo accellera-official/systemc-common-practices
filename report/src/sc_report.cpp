@@ -44,9 +44,9 @@ namespace {
 // races in the unordered_map
 
 #ifdef DISABLE_REPORT_THREAD_LOCAL
-std::unordered_map<uint64_t, sc_core::sc_verbosity> lut;
+std::unordered_map<uint64_t, sc_log::log_levels> lut;
 #else
-thread_local std::unordered_map<uint64_t, sc_core::sc_verbosity> lut;
+thread_local std::unordered_map<uint64_t, sc_log::log_levels> lut;
 #endif
 
 // BKDR hash algorithm
@@ -62,9 +62,9 @@ auto char_hash(char const* str) -> uint64_t
 }
 } // namespace
 
-sc_core::sc_verbosity scp::scp_logger_cache::get_log_verbosity_cached(const char* scname, const char* tname = "")
+sc_log::log_levels sc_log::sc_log_logger_cache::get_log_verbosity_cached(const char* scname, const char* tname = "")
 {
-    if (level != sc_core::SC_UNSET) {
+    if (level != sc_log::log_levels::UNSET) {
         return level;
     }
 
@@ -75,23 +75,23 @@ sc_core::sc_verbosity scp::scp_logger_cache::get_log_verbosity_cached(const char
 
     // find the first suitable registered sc_object that can handle the lookup
     for (auto o : sc_core::sc_get_top_level_objects()) {
-        auto* h = dynamic_cast<scp::scp_global_logger_handler*>(o);
+        auto* h = dynamic_cast<sc_log::sc_log_global_logger_handler*>(o);
         if (h) {
             auto& h_ref = *h;
             return h_ref(*this, scname, tname);
         }
     }
 
-    return level = static_cast<sc_core::sc_verbosity>(::sc_core::sc_report_handler::get_verbosity_level());
+    return level = static_cast<sc_log::log_levels>(::sc_core::sc_report_handler::get_verbosity_level());
 }
 
-auto scp::get_log_verbosity(char const* str) -> sc_core::sc_verbosity
+auto sc_log::get_log_verbosity(char const* str) -> sc_log::log_levels
 {
     auto k = char_hash(str);
     auto it = lut.find(k);
     if (it != lut.end()) return it->second;
 
-    scp::scp_logger_cache tmp;
+    sc_log::sc_log_logger_cache tmp;
     lut[k] = tmp.get_log_verbosity_cached(str);
     return lut[k];
 }

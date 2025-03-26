@@ -58,14 +58,14 @@ std::unordered_map<uint64_t, sc_core::sc_verbosity> lut;
 thread_local std::unordered_map<uint64_t, sc_core::sc_verbosity> lut;
 #endif
 
-struct ExtLogConfig : public scp::LogConfig {
+struct ExtLogConfig : public sc_log::LogConfig {
     std::shared_ptr<spdlog::logger> file_logger;
     std::shared_ptr<spdlog::logger> console_logger;
     std::regex reg_ex;
     sc_core::sc_time cycle_base{ 0, sc_core::SC_NS };
-    auto operator=(const scp::LogConfig& o) -> ExtLogConfig&
+    auto operator=(const sc_log::LogConfig& o) -> ExtLogConfig&
     {
-        scp::LogConfig::operator=(o);
+        sc_log::LogConfig::operator=(o);
         return *this;
     }
     auto match(const char* type) -> bool { return regex_search(type, reg_ex); }
@@ -145,7 +145,7 @@ auto time2string(const sc_core::sc_time& t) -> std::string
     }
     return oss.str();
 }
-auto compose_message(const sc_core::sc_report& rep, const scp::LogConfig& cfg) -> const std::string
+auto compose_message(const sc_core::sc_report& rep, const sc_log::LogConfig& cfg) -> const std::string
 {
     if (rep.get_severity() > sc_core::SC_INFO || cfg.log_filter_regex.length() == 0 ||
         rep.get_verbosity() == sc_core::SC_MEDIUM || log_cfg.match(rep.get_msg_type())) {
@@ -192,13 +192,12 @@ auto compose_message(const sc_core::sc_report& rep, const scp::LogConfig& cfg) -
         return "";
 }
 
-inline void log2logger(spdlog::logger& logger, const sc_core::sc_report& rep, const scp::LogConfig& cfg)
+inline void log2logger(spdlog::logger& logger, const sc_core::sc_report& rep, const sc_log::LogConfig& cfg)
 {
     auto msg = compose_message(rep, cfg);
     if (!msg.size()) return;
     switch (rep.get_severity()) {
-    case sc_core::SC_INFO:
-    {
+    case sc_core::SC_INFO: {
         int v = rep.get_verbosity();
         if (v >= sc_core::SC_DEBUG) {
             logger.trace(msg);
@@ -237,22 +236,22 @@ inline void log2logger(spdlog::logger& logger, const sc_core::sc_report& rep, co
     }
 }
 
-inline void log2logger(spdlog::logger& logger, scp::log lvl, const std::string& msg)
+inline void log2logger(spdlog::logger& logger, sc_log::log_levels lvl, const std::string& msg)
 {
     switch (lvl) {
-    case scp::log::FULL:
+    case sc_log::log_levels::TRACE:
         logger.trace(msg);
         return;
-    case scp::log::TRACE:
+    case sc_log::log_levels::DEBUG:
         logger.debug(msg);
         return;
-    case scp::log::INFO:
+    case sc_log::log_levels::INFO:
         logger.info(msg);
         return;
-    case scp::log::WARN:
+    case sc_log::log_levels::WARN:
         logger.warn(msg);
         return;
-    case scp::log::CRITICAL:
+    case sc_log::log_levels::CRITICAL:
         logger.error(msg);
         return;
     default:
@@ -270,7 +269,7 @@ void report_handler(const sc_core::sc_report& rep, const sc_core::sc_actions& ac
         if ((actions & sc_core::SC_DISPLAY) && (!log_cfg.file_logger || rep.get_verbosity() < sc_core::SC_HIGH))
             log2logger(*log_cfg.console_logger, rep, log_cfg);
         if ((actions & sc_core::SC_LOG) && log_cfg.file_logger) {
-            scp::LogConfig lcfg(log_cfg);
+            sc_log::LogConfig lcfg(log_cfg);
             lcfg.print_sim_time = true;
             if (!lcfg.msg_type_field_width) lcfg.msg_type_field_width = 24;
             log2logger(*log_cfg.file_logger, rep, lcfg);
@@ -358,14 +357,14 @@ static void configure_logging()
     }
 }
 
-void scp::reinit_logging(scp::log level)
+void sc_log::reinit_logging(sc_log::log_levels level)
 {
     sc_core::sc_report_handler::set_handler(report_handler);
     log_cfg.level = level;
     lut.clear();
 }
 
-void scp::init_logging(scp::log level, unsigned type_field_width, bool print_time)
+void sc_log::init_logging(sc_log::log_levels level, unsigned type_field_width, bool print_time)
 {
     log_cfg.msg_type_field_width = type_field_width;
     log_cfg.print_sys_time = print_time;
@@ -373,13 +372,13 @@ void scp::init_logging(scp::log level, unsigned type_field_width, bool print_tim
     configure_logging();
 }
 
-void scp::init_logging(const scp::LogConfig& log_config)
+void sc_log::init_logging(const sc_log::LogConfig& log_config)
 {
     log_cfg = log_config;
     configure_logging();
 }
 
-void scp::set_logging_level(scp::log level)
+void sc_log::set_logging_level(sc_log::log_levels level)
 {
     log_cfg.level = level;
     sc_core::sc_report_handler::set_verbosity_level(static_cast<unsigned>(level));
@@ -387,89 +386,89 @@ void scp::set_logging_level(scp::log level)
         SPDLOG_LEVEL_OFF - std::min<int>(SPDLOG_LEVEL_OFF, static_cast<int>(log_cfg.level))));
 }
 
-auto scp::get_logging_level() -> scp::log { return log_cfg.level; }
+auto sc_log::get_logging_level() -> sc_log::log_levels { return log_cfg.level; }
 
-void scp::set_cycle_base(sc_core::sc_time period) { log_cfg.cycle_base = period; }
+void sc_log::set_cycle_base(sc_core::sc_time period) { log_cfg.cycle_base = period; }
 
-auto scp::LogConfig::logLevel(scp::log level) -> scp::LogConfig&
+auto sc_log::LogConfig::logLevel(sc_log::log_levels level) -> sc_log::LogConfig&
 {
     this->level = level;
     return *this;
 }
-
-auto scp::LogConfig::msgTypeFieldWidth(unsigned width) -> scp::LogConfig&
+auto sc_log::LogConfig::logLevel(int level) -> sc_log::LogConfig& { return logLevel(as_log(level)); }
+auto sc_log::LogConfig::msgTypeFieldWidth(unsigned width) -> sc_log::LogConfig&
 {
     this->msg_type_field_width = width;
     return *this;
 }
 
-auto scp::LogConfig::printSysTime(bool enable) -> scp::LogConfig&
+auto sc_log::LogConfig::printSysTime(bool enable) -> sc_log::LogConfig&
 {
     this->print_sys_time = enable;
     return *this;
 }
 
-auto scp::LogConfig::printSimTime(bool enable) -> scp::LogConfig&
+auto sc_log::LogConfig::printSimTime(bool enable) -> sc_log::LogConfig&
 {
     this->print_sim_time = enable;
     return *this;
 }
 
-auto scp::LogConfig::printDelta(bool enable) -> scp::LogConfig&
+auto sc_log::LogConfig::printDelta(bool enable) -> sc_log::LogConfig&
 {
     this->print_delta = enable;
     return *this;
 }
 
-auto scp::LogConfig::printSeverity(bool enable) -> scp::LogConfig&
+auto sc_log::LogConfig::printSeverity(bool enable) -> sc_log::LogConfig&
 {
     this->print_severity = enable;
     return *this;
 }
 
-auto scp::LogConfig::logFileName(std::string&& name) -> scp::LogConfig&
+auto sc_log::LogConfig::logFileName(std::string&& name) -> sc_log::LogConfig&
 {
     this->log_file_name = name;
     return *this;
 }
 
-auto scp::LogConfig::logFileName(const std::string& name) -> scp::LogConfig&
+auto sc_log::LogConfig::logFileName(const std::string& name) -> sc_log::LogConfig&
 {
     this->log_file_name = name;
     return *this;
 }
 
-auto scp::LogConfig::coloredOutput(bool enable) -> scp::LogConfig&
+auto sc_log::LogConfig::coloredOutput(bool enable) -> sc_log::LogConfig&
 {
     this->colored_output = enable;
     return *this;
 }
 
-auto scp::LogConfig::logFilterRegex(std::string&& expr) -> scp::LogConfig&
+auto sc_log::LogConfig::logFilterRegex(std::string&& expr) -> sc_log::LogConfig&
 {
     this->log_filter_regex = expr;
     return *this;
 }
 
-auto scp::LogConfig::logFilterRegex(const std::string& expr) -> scp::LogConfig&
+auto sc_log::LogConfig::logFilterRegex(const std::string& expr) -> sc_log::LogConfig&
 {
     this->log_filter_regex = expr;
     return *this;
 }
 
-auto scp::LogConfig::logAsync(bool v) -> scp::LogConfig&
+auto sc_log::LogConfig::logAsync(bool v) -> sc_log::LogConfig&
 {
     this->log_async = v;
     return *this;
 }
 
-auto scp::LogConfig::reportOnlyFirstError(bool v) -> scp::LogConfig&
+auto sc_log::LogConfig::reportOnlyFirstError(bool v) -> sc_log::LogConfig&
 {
     this->report_only_first_error = v;
     return *this;
 }
 
-auto scp::LogConfig::fileInfoFrom(int v) -> scp::LogConfig&
+auto sc_log::LogConfig::fileInfoFrom(int v) -> sc_log::LogConfig&
 {
     this->file_info_from = v;
     return *this;

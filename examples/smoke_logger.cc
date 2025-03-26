@@ -30,32 +30,32 @@
 
 SC_MODULE (test4) {
     SC_CTOR (test4) {
-        SCP_INFO(()) << " .   T4 Logger() 1";
-        SCP_WARN(()) << " .   T4 Logger() 1";
-        SCP_INFO(()) << " .   T4 Logger() 2";
-        SCP_WARN(()) << " .   T4 Logger() 2";
+        SC_INFO(()) << " .   T4 Logger() 1";
+        SC_WARN(()) << " .   T4 Logger() 1";
+        SC_INFO(()) << " .   T4 Logger() 2";
+        SC_WARN(()) << " .   T4 Logger() 2";
     }
-    SCP_REPORTER();
+    SC_LOG_HANDLE();
 };
 
 SC_MODULE (test3) {
     SC_CTOR (test3) {
-        SCP_INFO((D)) << " .  T3 D Logger \"other\" \"feature.one\"";
-        SCP_WARN((D)) << " .  T3 D Logger \"other\" \"feature.one\"";
-        SCP_INFO(()) << " .  T3 Logger ()";
-        SCP_WARN(()) << " .  T3 Logger ()";
+        SC_INFO((D)) << " .  T3 D Logger \"other\" \"feature.one\"";
+        SC_WARN((D)) << " .  T3 D Logger \"other\" \"feature.one\"";
+        SC_INFO(()) << " .  T3 Logger ()";
+        SC_WARN(()) << " .  T3 Logger ()";
     }
-    SCP_REPORTER((D), "other", "feature.one");
-    SCP_REPORTER(());
+    SC_LOG_HANDLE((D), "other", "feature.one");
+    SC_LOG_HANDLE(());
 };
 
 SC_MODULE (test2) {
     SC_CTOR (test2) : t31("t3_1"), t32("t3_2"), t4("t4")
         {
-            SCP_INFO(()) << "  T2 Logger()";
-            SCP_WARN(()) << "  T2 Logger()";
+            SC_INFO(()) << "  T2 Logger()";
+            SC_WARN(()) << "  T2 Logger()";
         }
-    SCP_REPORTER();
+    SC_LOG_HANDLE();
     test3 t31, t32;
     test4 t4;
 };
@@ -63,52 +63,52 @@ SC_MODULE (test2) {
 SC_MODULE (test1) {
     SC_CTOR (test1) : t2("t2")
         {
-            SCP_WARN((), "My.Name") << " T1 My.Name typed log";
-            SCP_INFO(()) << " T1 Logger()";
-            SCP_WARN(()) << " T1 Logger()";
+            SC_WARN((), "My.Name") << " T1 My.Name typed log";
+            SC_INFO(()) << " T1 Logger()";
+            SC_WARN(()) << " T1 Logger()";
 
-            SCP_REPORTER_VECTOR_PUSH_BACK(vec, "some", "thing1");
-            SCP_REPORTER_VECTOR_PUSH_BACK(vec, "some", "thing2");
+            SC_LOG_HANDLE_VECTOR_PUSH_BACK(vec, "some", "thing1");
+            SC_LOG_HANDLE_VECTOR_PUSH_BACK(vec, "some", "thing2");
 
-            SCP_INFO((vec[0])) << "Thing1?";
-            SCP_WARN((vec[0])) << "Thing1?";
-            SCP_INFO((vec[1])) << "Thing2?";
-            SCP_WARN((vec[1])) << "Thing2?";
+            SC_INFO((vec[0])) << "Thing1?";
+            SC_WARN((vec[0])) << "Thing1?";
+            SC_INFO((vec[1])) << "Thing2?";
+            SC_WARN((vec[1])) << "Thing2?";
         }
-    SCP_REPORTER("something", "else");
-    SCP_REPORTER_VECTOR(vec);
+    SC_LOG_HANDLE("something", "else");
+    SC_LOG_HANDLE_VECTOR(vec);
     test2 t2;
 };
 
 class outside_class
 {
-    SCP_REPORTER("out.class", "thing1");
+    SC_LOG_HANDLE("out.class", "thing1");
 
 public:
     outside_class()
     {
-        SCP_INFO(())("constructor");
-        SCP_WARN(())("constructor");
+        SC_INFO(())("constructor");
+        SC_WARN(())("constructor");
     }
 };
 
 SC_MODULE (test) {
     outside_class oc;
     SC_CTOR (test) {
-        SCP_DEBUG(SCMOD) << "First part";
+        SC_DEBUG(SCMOD) << "First part";
         scp::tlm_extensions::path_trace ext;
         ext.stamp(this);
-        SCP_INFO(SCMOD) << ext.to_string();
+        SC_INFO(SCMOD) << ext.to_string();
         ext.reset();
 
         ext.stamp(this);
         ext.stamp(this);
         ext.stamp(this);
 
-        SCP_INFO(SCMOD) << ext.to_string();
+        SC_INFO(SCMOD) << ext.to_string();
         ext.reset();
 
-        SCP_DEBUG(SCMOD) << "Second part";
+        SC_DEBUG(SCMOD) << "Second part";
         scp::tlm_extensions::initiator_id mid(0x1234);
         mid = 0x2345;
         mid &= 0xff;
@@ -121,17 +121,17 @@ SC_MODULE (test) {
             SC_REPORT_INFO("ext test", "Failour");
         }
 
-        SCP_INFO() << "Globally cached version empty";
-        SCP_INFO(())("FMT String : Locally cached version default");
-        SCP_INFO(SCMOD) << "Globally cached version feature using SCMOD macro";
-        SCP_INFO((m_my_logger)) << "Locally cached version using (m_my_logger)";
-        SCP_INFO((D)) << "Locally cached version with D";
+        SC_INFO() << "Globally cached version empty";
+        SC_INFO(())("FMT String : Locally cached version default");
+        SC_INFO(SCMOD) << "Globally cached version feature using SCMOD macro";
+        SC_INFO((m_my_logger)) << "Locally cached version using (m_my_logger)";
+        SC_INFO((D)) << "Locally cached version with D";
     }
 
-    SCP_REPORTER((m_my_logger));
-    SCP_REPORTER(());
-    SCP_REPORTER((1), "other");
-    SCP_REPORTER((D), "other", "feature.one");
+    SC_LOG_HANDLE((m_my_logger));
+    SC_LOG_HANDLE(());
+    SC_LOG_HANDLE((1), "other");
+    SC_LOG_HANDLE((D), "other", "feature.one");
 };
 
 int sc_main(int argc, char** argv)
@@ -147,22 +147,22 @@ int sc_main(int argc, char** argv)
     broker.set_preset_cci_value("test4.log_level", cci::cci_value(400), orig);
     broker.set_preset_cci_value("thing1.log_level", cci::cci_value(500), orig);
 
-    std::string logfile = "/tmp/scp_smoke_report_test." + std::to_string(getpid());
+    std::string logfile = "/tmp/sc_log_smoke_report_test." + std::to_string(getpid());
     scp::scp_logger_from_cci cci_logger;
-    scp::init_logging(scp::LogConfig()
-                          .logLevel(scp::log::DEBUG) // set log level to debug
+    sc_log::init_logging(sc_log::LogConfig()
+                          .logLevel(sc_log::log_levels::DEBUG) // set log level to debug
                           .msgTypeFieldWidth(20)
                           .fileInfoFrom(5)
                           .logAsync(false)
                           .printSimTime(false)
                           .logFileName(logfile)); // make the msg type column a bit tighter
-    SCP_INFO() << "Constructing design";
+    SC_INFO() << "Constructing design";
     test toptest("top");
     test1 t1("t1");
 
-    SCP_INFO() << "Starting simulation";
+    SC_INFO() << "Starting simulation";
     sc_core::sc_start();
-    SCP_WARN() << "Ending simulation";
+    SC_WARN() << "Ending simulation";
 
 #ifdef FMT_SHARED
     std::string fmtstr = "FMT String : Locally cached version default";

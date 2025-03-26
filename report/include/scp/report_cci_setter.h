@@ -16,7 +16,7 @@
 #ifndef _SCP_REPORT_CCI_SETTER_H_
 #define _SCP_REPORT_CCI_SETTER_H_
 
-#include <scp/sc_report.h>
+#include <sc_log/sc_log.h>
 #include <cci_configuration>
 #include <type_traits>
 #include <regex>
@@ -25,7 +25,7 @@
 namespace scp {
 static std::set<std::string> logging_parameters;
 
-class scp_logger_from_cci : public scp_global_logger_handler
+class scp_logger_from_cci : public sc_log::sc_log_global_logger_handler
 {
     std::vector<std::string> split(const std::string& s) const
     {
@@ -53,28 +53,30 @@ class scp_logger_from_cci : public scp_global_logger_handler
         map.insert(make_pair(n, s));
 
         if (interesting) {
-            logging_parameters.insert(s + "." SCP_LOG_LEVEL_PARAM_NAME);
+            logging_parameters.insert(s + "." SC_LOG_LEVEL_PARAM_NAME);
         }
     }
-    sc_core::sc_verbosity cci_lookup(cci::cci_broker_handle broker, std::string name) const
+    sc_log::log_levels cci_lookup(cci::cci_broker_handle broker, std::string name) const
     {
-        auto param_name = (name.empty()) ? SCP_LOG_LEVEL_PARAM_NAME : name + "." SCP_LOG_LEVEL_PARAM_NAME;
+        auto param_name = (name.empty()) ? SC_LOG_LEVEL_PARAM_NAME : name + "." SC_LOG_LEVEL_PARAM_NAME;
         auto h = broker.get_param_handle(param_name);
         if (h.is_valid()) {
-            return static_cast<sc_core::sc_verbosity>(h.get_cci_value().get_int());
+            return static_cast<sc_log::log_levels>(h.get_cci_value().get_int());
         } else {
             auto val = broker.get_preset_cci_value(param_name);
 
             if (val.is_int()) {
                 broker.lock_preset_value(param_name);
-                return static_cast<sc_core::sc_verbosity>(val.get_int());
+                if (val.get_int() < 100)
+                    return static_cast<sc_log::log_levels>(val.get_int() * 100); // For 'old' SCP support
+                return static_cast<sc_log::log_levels>(val.get_int());
             }
             if (val.is_string()) {
                 broker.lock_preset_value(param_name);
-                return static_cast<sc_core::sc_verbosity>(scp::as_log(val.get_string()));
+                return static_cast<sc_log::log_levels>(sc_log::as_log(val.get_string()));
             }
         }
-        return sc_core::SC_UNSET;
+        return sc_log::log_levels::UNSET;
     }
 #ifdef __GNUG__
     std::string demangle(const char* name) const
@@ -92,13 +94,14 @@ class scp_logger_from_cci : public scp_global_logger_handler
     std::string demangle(const char* name) { return name; }
 #endif
 public:
-    sc_core::sc_verbosity operator()(struct scp_logger_cache& logger, const char* scname, const char* tname) const
+    sc_log::log_levels operator()(struct sc_log::sc_log_logger_cache& logger, const char* scname,
+                                  const char* tname) const
     {
         try {
             // we rely on there being a broker, allow this to throw if not
             auto broker = sc_core::sc_get_current_object()
                               ? cci::cci_get_broker()
-                              : cci::cci_get_global_broker(cci::cci_originator("scp_reporting_global"));
+                              : cci::cci_get_global_broker(cci::cci_originator("sc_log_reporting_global"));
 
             std::multimap<int, std::string, std::greater<int>> allfeatures;
 
@@ -129,8 +132,8 @@ public:
             insert(allfeatures, "", false);
 
             for (std::pair<int, std::string> f : allfeatures) {
-                sc_core::sc_verbosity v = cci_lookup(broker, f.second);
-                if (v != sc_core::SC_UNSET) {
+                sc_log::log_levels v = cci_lookup(broker, f.second);
+                if (v != sc_log::log_levels::UNSET) {
                     logger.level = v;
                     return v;
                 }
@@ -139,7 +142,7 @@ public:
             // If there is no global broker, revert to initialized verbosity
             // level
         }
-        return logger.level = static_cast<sc_core::sc_verbosity>(::sc_core::sc_report_handler::get_verbosity_level());
+        return logger.level = static_cast<sc_log::log_levels>(::sc_core::sc_report_handler::get_verbosity_level());
     }
     static std::vector<std::string> get_logging_parameters()
     {

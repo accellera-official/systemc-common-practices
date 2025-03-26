@@ -17,14 +17,24 @@
 #ifndef _SCP_LOGGER_H_
 #define _SCP_LOGGER_H_
 
-#include "sc_report.h"
+#include "sc_log/sc_log.h"
 
 /** \ingroup scp-report
  *  @{
  */
 /**@{*/
 //! @brief reporting backend utilities
-namespace scp {
+namespace sc_log {
+/**
+ * @fn void init_logging(log_levels=log_levels::WARN, unsigned=24, bool=false)
+ * @brief initializes the SystemC logging system with a particular logging
+ * level
+ *
+ * @param level the log level
+ * @param type_field_width the with of the type field in the output
+ * @param print_time whether to print the system time stamp
+ */
+void init_logging(log_levels level = log_levels::WARN, unsigned type_field_width = 24, bool print_time = false);
 /**
  * @fn void init_logging(log=log::WARN, unsigned=24, bool=false)
  * @brief initializes the SystemC logging system with a particular logging
@@ -34,17 +44,7 @@ namespace scp {
  * @param type_field_width the with of the type field in the output
  * @param print_time whether to print the system time stamp
  */
-void init_logging(log level = log::WARN, unsigned type_field_width = 24, bool print_time = false);
-/**
- * @fn void init_logging(log=log::WARN, unsigned=24, bool=false)
- * @brief initializes the SystemC logging system with a particular logging
- * level
- *
- * @param level the log level
- * @param type_field_width the with of the type field in the output
- * @param print_time whether to print the system time stamp
- */
-void reinit_logging(log level = log::WARN);
+void reinit_logging(log_levels level = log_levels::WARN);
 /**
  * @struct LogConfig
  * @brief the configuration class for the logging setup
@@ -53,7 +53,7 @@ void reinit_logging(log level = log::WARN);
  * class follows the builder pattern.
  */
 struct LogConfig {
-    log level{ log::WARN };
+    log_levels level{ log_levels::WARN };
     unsigned msg_type_field_width{ 24 };
     bool print_sys_time{ false };
     bool print_sim_time{ true };
@@ -67,7 +67,8 @@ struct LogConfig {
     int file_info_from{ sc_core::SC_INFO };
 
     //! set the logging level
-    LogConfig& logLevel(log);
+    LogConfig& logLevel(log_levels);
+    LogConfig& logLevel(int);
     //! define the width of the message field, 0 to disable,
     //! std::numeric_limits<unsigned>::max() for arbitrary width
     LogConfig& msgTypeFieldWidth(unsigned);
@@ -111,14 +112,14 @@ void init_logging(const LogConfig& log_config);
  *
  * @param level the logging level
  */
-void set_logging_level(log level);
+void set_logging_level(log_levels level);
 /**
  * @fn log get_logging_level()
  * @brief get the SystemC logging level
  *
  * @return the logging level
  */
-log get_logging_level();
+log_levels get_logging_level();
 /**
  * @fn void set_cycle_base(sc_core::sc_time)
  * @brief sets the cycle base for cycle based logging
@@ -136,6 +137,6 @@ void set_cycle_base(sc_core::sc_time period);
  * @return the global verbosity level
  */
 
-} // namespace scp
+} // namespace sc_log
 /** @} */ // end of scp logger
 #endif    /* _SCP_LOGGER_H_ */

@@ -17,8 +17,8 @@
  *
  * THIS FILE IS INTENDED TO BE UP-STREAMED
  */
-#ifndef _SCP_REPORT_H_
-#define _SCP_REPORT_H_
+#ifndef _SC_LOG_REPORT_H_
+#define _SC_LOG_REPORT_H_
 
 #include <cstring>
 #include <iostream>
@@ -49,57 +49,51 @@
  *   SC_NONE, SC_LOW,     SC_MEDIUM, SC_HIGH and  SC_FULL
  */
 
-namespace sc_core {
-const sc_core::sc_verbosity SC_UNSET = (sc_core::sc_verbosity)INT_MAX;
-}
-
 //! the name of the CCI property to attach to modules to control logging of
 //! this module
-#define SCP_LOG_LEVEL_PARAM_NAME "log_level"
+#define SC_LOG_LEVEL_PARAM_NAME "log_level"
 
 // must be global for macro to work.
 static const char* _SCP_FMT_EMPTY_STR = "";
 
-/** \ingroup scp-report
+/** \ingroup sc_log-report
  *  @{
  */
 /**@{*/
 //! @brief reporting  utilities
-namespace scp {
+namespace sc_log {
 
 /************************
  * Provide a set of names and conversions that are suitable for logging levels based on
  * SystemC "verbosity's"
  ************************/
 
-enum class log {
+enum class log_levels {
     NONE = sc_core::SC_NONE,
     CRITICAL = sc_core::SC_NONE,
     WARN = sc_core::SC_LOW,
     INFO = sc_core::SC_MEDIUM,
-    TRACE = sc_core::SC_HIGH,
-    FULL = sc_core::SC_DEBUG,
-
     DEBUG = sc_core::SC_HIGH,
-    DBGTRACE = sc_core::SC_DEBUG // Only for backward compatibility
+    TRACE = sc_core::SC_DEBUG,
+
+    UNSET = INT_MAX
 };
-inline std::map<log, std::string> log_map()
+inline std::map<log_levels, std::string> log_map()
 {
-    static std::map<log, std::string> m = {
-        { log::NONE, "NONE" }, { log::CRITICAL, "CRITICAL" }, { log::WARN, "WARN" },
-        { log::INFO, "INFO" }, { log::TRACE, "TRACE" },       { log::FULL, "FULL" }
-    };
+    static std::map<log_levels, std::string> m = { { log_levels::NONE, "NONE" },   { log_levels::CRITICAL, "CRITICAL" },
+                                                   { log_levels::WARN, "WARN" },   { log_levels::INFO, "INFO" },
+                                                   { log_levels::DEBUG, "DEBUG" }, { log_levels::TRACE, "TRACE" } };
     return m;
 }
 
 /**
- * @fn log as_log(sc_verbosity)
- * @brief safely convert an sc_verbosity (integer) into a log level
+ * @fn log as_log(int)
+ * @brief safely convert an integer into a log level
  *
  * @param logLevel the logging level
  * @return the log level
  */
-inline log as_log(sc_core::sc_verbosity logLevel)
+inline log_levels as_log(int logLevel)
 {
     auto m = log_map();
     for (auto l : m) {
@@ -107,7 +101,7 @@ inline log as_log(sc_core::sc_verbosity logLevel)
             return l.first;
         }
     }
-    return log::FULL;
+    return log_levels::TRACE;
 }
 
 /**
@@ -117,13 +111,13 @@ inline log as_log(sc_core::sc_verbosity logLevel)
  * @param logName the string name for the log level
  * @return the log level
  */
-inline log as_log(std::string logName)
+inline log_levels as_log(std::string logName)
 {
     auto m = log_map();
     for (auto l : m) {
-        if (logName == l.second) return l.first;
+        if (logName <= l.second) return l.first;
     }
-    sc_assert(false);
+    return log_levels::TRACE;
 }
 /**
  * @fn std::istream& operator >>(std::istream&, log&)
@@ -133,7 +127,7 @@ inline log as_log(std::string logName)
  * @param val the value holding the resulting value
  * @return the input stream
  */
-inline std::istream& operator>>(std::istream& is, log& val)
+inline std::istream& operator>>(std::istream& is, log_levels& val)
 {
     std::string buf;
     is >> buf;
@@ -148,7 +142,7 @@ inline std::istream& operator>>(std::istream& is, log& val)
  * @param val logging level
  * @return reference to the stream for chaining
  */
-inline std::ostream& operator<<(std::ostream& os, log const& val)
+inline std::ostream& operator<<(std::ostream& os, log_levels const& val)
 {
     auto m = log_map();
     os << m[val];
@@ -161,27 +155,26 @@ inline std::ostream& operator<<(std::ostream& os, log const& val)
  * @brief cached logging information used in the (logger) form.
  *
  */
-struct scp_logger_cache {
-    sc_core::sc_verbosity level = sc_core::SC_UNSET;
+struct sc_log_logger_cache {
+    log_levels level = log_levels::UNSET;
     std::string type;
     std::vector<std::string> features;
 
     /**
      * @brief Initialize the verbosity cache and/or return the cached value.
      *
-     * @return sc_core::sc_verbosity
+     * @return log
      */
-    sc_core::sc_verbosity get_log_verbosity_cached(const char*, const char*);
+    log_levels get_log_verbosity_cached(const char*, const char*);
 };
 
-struct scp_global_logger_handler : sc_core::sc_object {
-    virtual sc_core::sc_verbosity operator()(struct scp_logger_cache& logger, const char* scname,
-                                             const char* tname) const = 0;
+struct sc_log_global_logger_handler : sc_core::sc_object {
+    virtual log_levels operator()(struct sc_log_logger_cache& logger, const char* scname, const char* tname) const = 0;
 };
 
-inline sc_core::sc_verbosity get_log_verbosity()
+inline log_levels get_log_verbosity()
 {
-    return static_cast<sc_core::sc_verbosity>(::sc_core::sc_report_handler::get_verbosity_level());
+    return static_cast<log_levels>(::sc_core::sc_report_handler::get_verbosity_level());
 }
 /**
  * @fn sc_core::sc_verbosity get_log_verbosity(const char*)
@@ -194,7 +187,8 @@ inline sc_core::sc_verbosity get_log_verbosity()
  * @param t the SystemC hierarchy scope name
  * @return the verbosity level
  */
-sc_core::sc_verbosity get_log_verbosity(char const* t);
+
+log_levels get_log_verbosity(char const* t);
 /**
  * @fn sc_core::sc_verbosity get_log_verbosity(const char*)
  * @brief get the scope-based verbosity level
@@ -206,7 +200,7 @@ sc_core::sc_verbosity get_log_verbosity(char const* t);
  * @param t the SystemC hierarchy scope name
  * @return the verbosity level
  */
-inline sc_core::sc_verbosity get_log_verbosity(std::string const& t) { return get_log_verbosity(t.c_str()); }
+inline log_levels get_log_verbosity(std::string const& t) { return get_log_verbosity(t.c_str()); }
 
 /**
  * @brief Return list of logging parameters that have been used
@@ -233,7 +227,7 @@ struct ScLogger {
      * @param line number where the log entry originates
      * @param verbosity the log level
      */
-    ScLogger(const char* file, int line, int verbosity = sc_core::SC_MEDIUM)
+    ScLogger(const char* file, int line, log_levels verbosity = sc_log::log_levels::INFO)
         : t(nullptr), file(file), line(line), level(verbosity)
     {
     }
@@ -261,7 +255,8 @@ struct ScLogger {
             sc_core::sc_report_handler::set_actions(
                 SEVERITY, old & ~(sc_core::SC_THROW | sc_core::SC_INTERRUPT | sc_core::SC_STOP | sc_core::SC_ABORT));
         }
-        ::sc_core::sc_report_handler::report(SEVERITY, t ? t : "SystemC", os.str().c_str(), level, file, line);
+        ::sc_core::sc_report_handler::report(SEVERITY, t ? t : "SystemC", os.str().c_str(),
+                                             static_cast<sc_core::sc_verbosity>(level), file, line);
         sc_core::sc_report_handler::set_actions(SEVERITY, old);
     }
     /**
@@ -312,7 +307,7 @@ protected:
     char* t{ nullptr };
     const char* file;
     const int line;
-    const int level;
+    const log_levels level;
 };
 
 /**
@@ -346,20 +341,20 @@ protected:
 /********/
 
 /* default logger cache name */
-#define SCP_REPORTER_NAME(x) CAT(_m_scp_log_level_cache_, x)
+#define SC_LOG_HANDLE_NAME(x) CAT(_m_sc_log_log_level_cache_, x)
 
 /* User interface macros */
 #define SCMOD this->sc_core::sc_module::name()
-#define SCP_REPORTER(...)                                            \
-    scp::scp_logger_cache IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))(     \
-        SCP_REPORTER_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__))), \
-        SCP_REPORTER_NAME()) = { sc_core::SC_UNSET,                  \
-                                 "",                                 \
-                                 { IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))(POP_ARG(__VA_ARGS__), ##__VA_ARGS__) } }
+#define SC_LOG_HANDLE(...)                                             \
+    sc_log::sc_log_logger_cache IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))( \
+        SC_LOG_HANDLE_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__))),  \
+        SC_LOG_HANDLE_NAME()) = { sc_log::log_levels::UNSET,           \
+                                  "",                                  \
+                                  { IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))(POP_ARG(__VA_ARGS__), ##__VA_ARGS__) } }
 
-#define SCP_REPORTER_VECTOR(NAME) std::vector<scp::scp_logger_cache> SCP_REPORTER_NAME(NAME)
-#define SCP_REPORTER_VECTOR_PUSH_BACK(NAME, ...) \
-    SCP_REPORTER_NAME(NAME).push_back({ sc_core::SC_UNSET, "", { __VA_ARGS__ } });
+#define SC_LOG_HANDLE_VECTOR(NAME) std::vector<sc_log::sc_log_logger_cache> SC_LOG_HANDLE_NAME(NAME)
+#define SC_LOG_HANDLE_VECTOR_PUSH_BACK(NAME, ...) \
+    SC_LOG_HANDLE_NAME(NAME).push_back({ sc_log::log_levels::UNSET, "", { __VA_ARGS__ } });
 
 class call_sc_name_fn
 {
@@ -395,18 +390,19 @@ public:
 /*** Helper macros for SCP_ report macros ****/
 #define SCP_VBSTY_CHECK_CACHED(lvl, features, cached, ...) \
     (cached.level >= lvl) &&                               \
-        (cached.get_log_verbosity_cached(scp::call_sc_name_fn()(this), typeid(*this).name()) >= lvl)
+        (cached.get_log_verbosity_cached(sc_log::call_sc_name_fn()(this), typeid(*this).name()) >= lvl)
 
-#define SCP_VBSTY_CHECK_UNCACHED(lvl, ...) (::scp::get_log_verbosity(__VA_ARGS__) >= lvl)
+#define SCP_VBSTY_CHECK_UNCACHED(lvl, ...) (::sc_log::get_log_verbosity(__VA_ARGS__) >= lvl)
 
-#define SCP_VBSTY_CHECK(lvl, ...)                                                                                      \
-    IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))                                                                              \
-    (SCP_VBSTY_CHECK_CACHED(lvl, FIRST_ARG(__VA_ARGS__), SCP_REPORTER_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__)))), \
+#define SCP_VBSTY_CHECK(lvl, ...)                                                          \
+    IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))                                                  \
+    (SCP_VBSTY_CHECK_CACHED(lvl, FIRST_ARG(__VA_ARGS__),                                   \
+                            SC_LOG_HANDLE_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__)))), \
      SCP_VBSTY_CHECK_UNCACHED(lvl, ##__VA_ARGS__))
 
-#define SCP_GET_FEATURES(...)                                                                                    \
-    IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))                                                                        \
-    (FIRST_ARG EXPAND((POP_ARG(__VA_ARGS__, SCP_REPORTER_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__))).type))), \
+#define SCP_GET_FEATURES(...)                                                                                     \
+    IIF(IS_PAREN(FIRST_ARG(__VA_ARGS__)))                                                                         \
+    (FIRST_ARG EXPAND((POP_ARG(__VA_ARGS__, SC_LOG_HANDLE_NAME(EXPAND(FIRST_ARG FIRST_ARG(__VA_ARGS__))).type))), \
      __VA_ARGS__)
 
 #ifdef FMT_SHARED
@@ -415,33 +411,20 @@ public:
 #define _SCP_FMT_EMPTY_STR(...) "Please add FMT library for FMT support."
 #endif
 
-#define SCP_MSG(lvl, ...)                                                                                         \
-    ::scp::ScLogger<::sc_core::SC_INFO, false>(__FILE__, __LINE__, lvl).type(SCP_GET_FEATURES(__VA_ARGS__)).get() \
+#define SCP_MSG(lvl, ...)                                                                                            \
+    ::sc_log::ScLogger<::sc_core::SC_INFO, false>(__FILE__, __LINE__, lvl).type(SCP_GET_FEATURES(__VA_ARGS__)).get() \
         << _SCP_FMT_EMPTY_STR
 /*** End HELPER Macros *******/
 
-#define SCP_LOG(lvl, ...) \
-    if (SCP_VBSTY_CHECK(lvl, ##__VA_ARGS__)) SCP_MSG(lvl, __VA_ARGS__)
+#define SC_LOG_AT(lvl, ...) \
+    if (SCP_VBSTY_CHECK(lvl, __VA_ARGS__)) SCP_MSG(lvl, __VA_ARGS__)
 
-#define SCCRITICAL(...) SCP_LOG(log::CRITICAL, ##__VA_ARGS__)
-#define SCWARN(...)     SCP_LOG(log::WARN, ##__VA_ARGS__)
-#define SCINFO(...)     SCP_LOG(log::INFO, ##__VA_ARGS__)
-#define SCTRACE(...)    SCP_LOG(log::TRACE, ##__VA_ARGS__)
-#define SCFULL(...)     SCP_LOG(log::FULL, ##__VA_ARGS__)
+#define SC_CRITICAL(...) SC_LOG_AT(sc_log::log_levels::CRITICAL, _VA_ARGS__)
+#define SC_WARN(...)     SC_LOG_AT(sc_log::log_levels::WARN, __VA_ARGS__)
+#define SC_INFO(...)     SC_LOG_AT(sc_log::log_levels::INFO, __VA_ARGS__)
+#define SC_DEBUG(...)    SC_LOG_AT(sc_log::log_levels::DEBUG, __VA_ARGS__)
+#define SC_TRACE(...)    SC_LOG_AT(sc_log::log_levels::TRACE, __VA_ARGS__)
 
-/* Only for backwards compatibility with SCP library */
-#define SCP_FATAL(...)                                                                                            \
-    ::scp::ScLogger<::sc_core::SC_FATAL, true>(__FILE__, __LINE__, sc_core::SC_NONE).type(SCP_GET_FEATURES(__VA_ARGS__)).get() \
-        << _SCP_FMT_EMPTY_STR
-#define SCP_ERR(...)                                                                                              \
-    ::scp::ScLogger<::sc_core::SC_ERROR, true>(__FILE__, __LINE__, sc_core::SC_NONE).type(SCP_GET_FEATURES(__VA_ARGS__)).get() \
-        << _SCP_FMT_EMPTY_STR
-#define SCP_WARN(...)     SCP_LOG(sc_core::SC_LOW, ##__VA_ARGS__)
-#define SCP_INFO(...)     SCP_LOG(sc_core::SC_MEDIUM, ##__VA_ARGS__)
-#define SCP_DEBUG(...)    SCP_LOG(sc_core::SC_HIGH, ##__VA_ARGS__)
-#define SCP_TRACE(...)    SCP_LOG(sc_core::SC_FULL, ##__VA_ARGS__)
-#define SCP_TRACEALL(...) SCP_LOG(sc_core::SC_DEBUG, ##__VA_ARGS__)
-
-} // namespace scp
-/** @} */ // end of scp-report
-#endif    /* _SCP_REPORT_H_ */
+} // namespace sc_log
+/** @} */ // end of sc_log-report
+#endif    /* _SC_LOG_REPORT_H_ */
