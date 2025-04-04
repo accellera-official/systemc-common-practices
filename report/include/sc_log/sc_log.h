@@ -17,8 +17,11 @@
  *
  * THIS FILE IS INTENDED TO BE UP-STREAMED
  */
-#ifndef _SC_LOG_REPORT_H_
-#define _SC_LOG_REPORT_H_
+#ifndef _SCP_LOG_REPORT_H_
+#define _SCP_LOG_REPORT_H_
+
+#include <systemc>
+#ifndef SC_HAS_SC_LOG
 
 #include <cstring>
 #include <iostream>
@@ -26,32 +29,6 @@
 #include <array>
 #include <map>
 #include <vector>
-
-#ifdef __GNUG__
-#include <cstdlib>
-#include <cxxabi.h>
-#endif
-
-#include <sysc/kernel/sc_module.h>
-#include <sysc/kernel/sc_time.h>
-#include <sysc/utils/sc_report.h>
-
-#if defined(_MSC_VER) && defined(ERROR)
-#undef ERROR
-#endif
-
-/* In SystemC there are 2 'scales' the severity which is INFO, WARNING, ERROR and FATAL.
- * And Verbosity which is a sub-division of INFO (NONE, LOW, MEDIUM, HIGH, FULL and DEBUG)
- *
- * Here we add Loging levels:
- *   CRITICAL, WARN,      INFO,      TRACE and    FULL.
- * Which correspond to the Verbosity levels
- *   SC_NONE, SC_LOW,     SC_MEDIUM, SC_HIGH and  SC_FULL
- */
-
-//! the name of the CCI property to attach to modules to control logging of
-//! this module
-#define SC_LOG_LEVEL_PARAM_NAME "log_level"
 
 // must be global for macro to work.
 static const char* _SCP_FMT_EMPTY_STR = "";
@@ -80,9 +57,10 @@ enum class log_levels {
 };
 inline std::map<log_levels, std::string> log_map()
 {
-    static std::map<log_levels, std::string> m = { { log_levels::NONE, "NONE" },   { log_levels::CRITICAL, "CRITICAL" },
-                                                   { log_levels::WARN, "WARN" },   { log_levels::INFO, "INFO" },
-                                                   { log_levels::DEBUG, "DEBUG" }, { log_levels::TRACE, "TRACE" } };
+    static std::map<log_levels, std::string> m = {
+        { log_levels::CRITICAL, "CRITICAL" }, { log_levels::NONE, "NONE" },   { log_levels::WARN, "WARN" },
+        { log_levels::INFO, "INFO" },         { log_levels::DEBUG, "DEBUG" }, { log_levels::TRACE, "TRACE" }
+    };
     return m;
 }
 
@@ -115,7 +93,7 @@ inline log_levels as_log(std::string logName)
 {
     auto m = log_map();
     for (auto l : m) {
-        if (logName <= l.second) return l.first;
+        if (logName == l.second) return l.first;
     }
     return log_levels::TRACE;
 }
@@ -169,7 +147,7 @@ struct sc_log_logger_cache {
 };
 
 struct sc_log_global_logger_handler : sc_core::sc_object {
-    virtual log_levels operator()(struct sc_log_logger_cache& logger, const char* scname, const char* tname) const = 0;
+    virtual log_levels operator()(struct sc_log_logger_cache& logger, std::string_view scname, const char* tname) const = 0;
 };
 
 inline log_levels get_log_verbosity()
@@ -427,4 +405,5 @@ public:
 
 } // namespace sc_log
 /** @} */ // end of sc_log-report
+#endif  // SCP_HAS_SC_LOG
 #endif    /* _SC_LOG_REPORT_H_ */

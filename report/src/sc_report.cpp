@@ -21,9 +21,9 @@
  *
  * THIS FILE IS INTENDED TO BE UP-STREAMED
  */
-
-#include <scp/logger.h>
 #include <systemc>
+#ifndef SC_HAS_SC_LOG
+#include <scp/logger.h>
 #include <unordered_map>
 
 #if defined(__GNUC__) || defined(__clang__)
@@ -95,3 +95,4 @@ auto sc_log::get_log_verbosity(char const* str) -> sc_log::log_levels
     lut[k] = tmp.get_log_verbosity_cached(str);
     return lut[k];
 }
+#endif  // SC_HAS_SC_LOG

@@ -20,11 +20,11 @@
  *      Author: eyck@minres.com
  */
 
-#include <scp/logger.h>
 #include <array>
 #include <chrono>
 #include <fstream>
 #include <systemc>
+#include <scp/logger.h>
 #include <iomanip>
 #include <mutex>
 #include <spdlog/async.h>

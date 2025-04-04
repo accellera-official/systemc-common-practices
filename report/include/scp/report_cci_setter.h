@@ -16,11 +16,19 @@
 #ifndef _SCP_REPORT_CCI_SETTER_H_
 #define _SCP_REPORT_CCI_SETTER_H_
 
+#include <systemc>
 #include <sc_log/sc_log.h>
 #include <cci_configuration>
 #include <type_traits>
 #include <regex>
 #include <numeric>
+
+#ifdef __GNUG__
+#include <cstdlib>
+#include <cxxabi.h>
+#endif
+
+#define SC_LOG_LEVEL_PARAM_NAME "log_level"
 
 namespace scp {
 static std::set<std::string> logging_parameters;
@@ -94,7 +102,7 @@ class scp_logger_from_cci : public sc_log::sc_log_global_logger_handler
     std::string demangle(const char* name) { return name; }
 #endif
 public:
-    sc_log::log_levels operator()(struct sc_log::sc_log_logger_cache& logger, const char* scname,
+    sc_log::log_levels operator()(struct sc_log::sc_log_logger_cache& logger, std::string_view scname,
                                   const char* tname) const
     {
         try {
@@ -106,7 +114,7 @@ public:
             std::multimap<int, std::string, std::greater<int>> allfeatures;
 
             /* initialize */
-            for (auto scn = split(scname); scn.size(); scn.pop_back()) {
+            for (auto scn = split(std::string(scname)); scn.size(); scn.pop_back()) {
                 for (int first = 0; first < scn.size(); first++) {
                     auto f = scn.begin() + first;
                     std::vector<std::string> p(f, scn.end());
