@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
-project(reporting VERSION 1.0 LANGUAGES CXX C)
+project(scp_logging VERSION 1.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ standard to build all targets.")
 
@@ -102,6 +102,8 @@ enable_testing()
 add_subdirectory(tests)
 endif()
 add_library("scp::report::lib${PROJECT_NAME}" ALIAS ${PROJECT_NAME})
+add_library("scp::reporting" ALIAS "${PROJECT_NAME}")
+
 packageproject(
   NAME "${PROJECT_NAME}"
   VERSION ${PROJECT_VERSION}

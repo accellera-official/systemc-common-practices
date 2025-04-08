@@ -10,6 +10,9 @@
 #include "scp/logger.h"
 
 /* Only for backwards compatibility with SCP library */
+#ifdef SC_HAS_SC_LOG
+#define _SCP_FMT_EMPTY_STR _SC_LOG_FMT_EMPTY_STR
+#endif
 
 #define SCP_LOG_LEVEL_PARAM_NAME SC_LOG_LEVEL_PARAM_NAME
 
