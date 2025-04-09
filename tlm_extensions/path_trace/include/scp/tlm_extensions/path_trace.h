@@ -40,11 +40,10 @@ public:
     path_trace() = default;
     path_trace(const path_trace&) = default;
 
-    virtual tlm_extension_base* clone() const override {
-        return new path_trace(*this);
-    }
+    virtual tlm_extension_base* clone() const override { return new path_trace(*this); }
 
-    virtual void copy_from(const tlm_extension_base& ext) override {
+    virtual void copy_from(const tlm_extension_base& ext) override
+    {
         const path_trace& other = static_cast<const path_trace&>(ext);
         *this = other;
     }
@@ -66,7 +65,8 @@ public:
      * @return a string consisting of the names of each object stamped into the
      * path separated with the separator provided.
      */
-    std::string to_string(std::string separator = "->") {
+    std::string to_string(std::string separator = "->")
+    {
         std::stringstream info;
         std::string s;
         for (auto o : m_path) {

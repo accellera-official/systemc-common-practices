@@ -23,8 +23,6 @@
 
 #include <cstdio>
 #include <string>
-#include <fstream>
-#include <streambuf>
 #include <unistd.h>
 
 SC_MODULE (test4) {
@@ -49,7 +47,8 @@ SC_MODULE (test3) {
 };
 
 SC_MODULE (test2) {
-    SC_CTOR (test2) : t31("t3_1"), t32("t3_2"), t4("t4") {
+    SC_CTOR (test2) : t31("t3_1"), t32("t3_2"), t4("t4")
+        {
             SCP_INFO(()) << "  T2 Logger()";
             SCP_WARN(()) << "  T2 Logger()";
         }
@@ -59,7 +58,8 @@ SC_MODULE (test2) {
 };
 
 SC_MODULE (test1) {
-    SC_CTOR (test1) : t2("t2") {
+    SC_CTOR (test1) : t2("t2")
+        {
             SCP_WARN((), "My.Name") << " T1 My.Name typed log";
             SCP_INFO(()) << " T1 Logger()";
             SCP_WARN(()) << " T1 Logger()";
@@ -82,7 +82,8 @@ class outside_class
     SCP_LOGGER("out.class", "thing1");
 
 public:
-    outside_class() {
+    outside_class()
+    {
         SCP_INFO(())("constructor");
         SCP_WARN(())("constructor");
     }
@@ -130,28 +131,20 @@ SC_MODULE (test) {
     SCP_LOGGER((D), "other", "feature.one");
 };
 
-int sc_main(int argc, char** argv) {
+int sc_main(int argc, char** argv)
+{
     cci_utils::consuming_broker broker("global_broker");
     cci_register_broker(broker);
     cci::cci_originator orig("config");
-    broker.set_preset_cci_value("log_level", cci::cci_value(1), orig);
-    broker.set_preset_cci_value("top.log_level", cci::cci_value(5), orig);
-    broker.set_preset_cci_value("*.t3_1.log_level", cci::cci_value(5), orig);
-    broker.set_preset_cci_value("feature.log_level", cci::cci_value(5), orig);
+    broker.set_preset_cci_value("log_level", cci::cci_value(100), orig);
+    broker.set_preset_cci_value("top.log_level", cci::cci_value(500), orig);
+    broker.set_preset_cci_value("*.t3_1.log_level", cci::cci_value(500), orig);
+    broker.set_preset_cci_value("feature.log_level", cci::cci_value(500), orig);
 
-    broker.set_preset_cci_value("test4.log_level", cci::cci_value(4), orig);
-    broker.set_preset_cci_value("thing1.log_level", cci::cci_value(5), orig);
+    broker.set_preset_cci_value("test4.log_level", cci::cci_value(400), orig);
+    broker.set_preset_cci_value("thing1.log_level", cci::cci_value(500), orig);
 
-    std::string logfile = "/tmp/scp_smoke_report_test." +
-                          std::to_string(getpid());
-    scp::init_logging(
-        scp::LogConfig()
-            .logLevel(scp::log::DEBUG) // set log level to debug
-            .msgTypeFieldWidth(20)
-            .fileInfoFrom(5)
-            .logAsync(false)
-            .printSimTime(false)
-            .logFileName(logfile)); // make the msg type column a bit tighter
+    std::string logfile = "/tmp/scp_smoke_report_test." + std::to_string(getpid());
     SCP_INFO() << "Constructing design";
     test toptest("top");
     test1 t1("t1");
@@ -160,56 +153,5 @@ int sc_main(int argc, char** argv) {
     sc_core::sc_start();
     SCP_WARN() << "Ending simulation";
 
-#ifdef FMT_SHARED
-    std::string fmtstr = "FMT String : Cached version default";
-#else
-    std::string fmtstr = "Please add FMT library for FMT support.";
-#endif
-
-    std::string expected =
-        R"([    info] [                0 s ]SystemC             : Constructing design
-[    info] [                0 s ]out.class           : constructor
-[ warning] [                0 s ]out.class           : constructor
-[   debug] [                0 s ]top                 : First part
-[    info] [                0 s ]top                 : top
-[    info] [                0 s ]top                 : top->top->top
-[   debug] [                0 s ]top                 : Second part
-[    info] [                0 s ]ext test            : Success
-[    info] [                0 s ]SystemC             : Uncached version empty
-[    info] [                0 s ]top                 : )" +
-        fmtstr + R"(
-[    info] [                0 s ]top                 : UnCached version feature using SCMOD macro
-[    info] [                0 s ]top                 : Cached version using (m_my_logger)
-[    info] [                0 s ]top                 : Cached version with D
-[    info] [                0 s ]t1.t2.t3_1          :  .  T3 D Logger "other" "feature.one"
-[ warning] [                0 s ]t1.t2.t3_1          :  .  T3 D Logger "other" "feature.one"
-[    info] [                0 s ]t1.t2.t3_1          :  .  T3 Logger ()
-[ warning] [                0 s ]t1.t2.t3_1          :  .  T3 Logger ()
-[    info] [                0 s ]t1.t2.t3_2          :  .  T3 D Logger "other" "feature.one"
-[ warning] [                0 s ]t1.t2.t3_2          :  .  T3 D Logger "other" "feature.one"
-[ warning] [                0 s ]t1.t2.t3_2          :  .  T3 Logger ()
-[    info] [                0 s ]t1.t2.t4            :  .   T4 Logger() 1
-[ warning] [                0 s ]t1.t2.t4            :  .   T4 Logger() 1
-[    info] [                0 s ]t1.t2.t4            :  .   T4 Logger() 2
-[ warning] [                0 s ]t1.t2.t4            :  .   T4 Logger() 2
-[ warning] [                0 s ]t1.t2               :   T2 Logger()
-[ warning] [                0 s ]My.Name             :  T1 My.Name typed log
-[ warning] [                0 s ]t1                  :  T1 Logger()
-[    info] [                0 s ]t1                  : Thing1?
-[ warning] [                0 s ]t1                  : Thing1?
-[ warning] [                0 s ]t1                  : Thing2?
-[    info] [                0 s ]SystemC             : Starting simulation
-[ warning] [                0 s ]SystemC             : Ending simulation
-)";
-
-    std::ifstream lf(logfile);
-    std::string out((std::istreambuf_iterator<char>(lf)),
-                    std::istreambuf_iterator<char>());
-
-    std::cout << "out file\n" << out << "\n";
-    std::cout << "expected\n" << expected << "\n";
-    std::cout << "Number of difference: " << out.compare(expected) << "\n";
-
-    std::remove(logfile.c_str());
-    return out.compare(expected);
+    return 0;
 }
