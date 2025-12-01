@@ -41,9 +41,9 @@
 #include <fmt/format.h>
 #endif
 
-#if defined(_MSC_VER) && defined(ERROR)
+// Due to ERROR being a macro defined on Windows platforms,
+// we need to #undef it to avoid a collision with log:ERROR.
 #undef ERROR
-#endif
 
 namespace sc_core {
 const sc_core::sc_verbosity SC_UNSET = (sc_core::sc_verbosity)INT_MAX;
