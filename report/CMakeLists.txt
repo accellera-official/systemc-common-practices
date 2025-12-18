@@ -12,7 +12,7 @@ FetchContent_Declare(
   cpm-cmake
   GIT_REPOSITORY ${GITHUB}cpm-cmake/CPM.cmake.git
   GIT_SHALLOW True
-  GIT_TAG v0.31.1
+  GIT_TAG v0.40.2
 )
 
 FetchContent_MakeAvailable(cpm-cmake)
@@ -51,7 +51,7 @@ FetchContent_Declare(
     GIT_TAG        "v1.9.2"
     GIT_SHALLOW    ON
 )
-FetchContent_Populate(spdlog_git)
+FetchContent_MakeAvailable(spdlog_git)
 FetchContent_GetProperties(
   spdlog_git
   SOURCE_DIR spdlog_git_SRC_DIR
