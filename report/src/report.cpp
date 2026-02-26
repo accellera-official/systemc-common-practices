@@ -464,6 +464,22 @@ void scp::set_cycle_base(sc_core::sc_time period) {
     log_cfg.cycle_base = period;
 }
 
+void scp::shutdown_logging() {
+    // Flush all loggers before shutdown
+    if (log_cfg.console_logger) {
+        log_cfg.console_logger->flush();
+    }
+    if (log_cfg.file_logger) {
+        log_cfg.file_logger->flush();
+    }
+
+    // Drop all spdlog loggers to release resources
+    spdlog::drop_all();
+
+    // Shutdown the thread pool - this will join all worker threads
+    spdlog::shutdown();
+}
+
 auto scp::LogConfig::logLevel(scp::log level) -> scp::LogConfig& {
     this->level = level;
     return *this;

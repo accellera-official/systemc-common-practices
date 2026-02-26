@@ -129,18 +129,20 @@ Hence a module of type `mymod`, instanced with hierarchical name `top.foo` with 
 
 
 ## Initialization
+
+### Recommended: Using LoggingGuard (RAII)
 ```C
-   scp::init_logging(config)
+   scp::LoggingGuard guard(config);
 ```
-This is an optional function which enables the more complex logging mechanisms. Without it, only basic logging is possible. This takes a configuration structure as a parameter.
+This is the recommended approach which automatically handles initialization and cleanup. The guard ensures that `shutdown_logging()` is called when it goes out of scope, preventing resource leaks and Windows DLL unload hangs.
 
 The configuration structure can be constructed simply:
 ```C
     scp::LogConfig()
 ```
-Convenience functions are provided on a configuration structure that return a modified structure, hence  for example:
+Convenience functions are provided on a configuration structure that return a modified structure, hence for example:
 ```C
-    scp::init_logging(
+    scp::LoggingGuard guard(
         scp::LogConfig()
             .logLevel(scp::log::DEBUG)
             .msgTypeFieldWidth(20)
@@ -149,6 +151,14 @@ Convenience functions are provided on a configuration structure that return a mo
             .printSimTime(false)
             .logFileName(logfile));
 ```
+
+### Alternative: Manual initialization
+```C
+   scp::init_logging(config);
+   // ... your code ...
+   scp::shutdown_logging();
+```
+If you use `init_logging()` directly, you MUST call `shutdown_logging()` before application exit to properly clean up logging resources.
 
 | Use                                                        |   method                                   |  Default
 | ---- | ---- | --- |
