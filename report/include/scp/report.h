@@ -249,6 +249,81 @@ log get_logging_level();
  */
 void set_cycle_base(sc_core::sc_time period);
 /**
+ * @fn void shutdown_logging()
+ * @brief shuts down the logging system and cleans up resources
+ *
+ * This function flushes all pending log messages, drops all loggers,
+ * and shuts down the spdlog thread pool. This should be called before
+ * application exit to ensure proper cleanup and avoid deadlocks during
+ * static destruction on Windows.
+ */
+void shutdown_logging();
+/**
+ * @class LoggingGuard
+ * @brief RAII wrapper for logging initialization and cleanup
+ *
+ * This class ensures that logging resources are properly initialized
+ * on construction and cleaned up on destruction, preventing resource
+ * leaks and Windows DLL unload hangs. Use this class instead of manually
+ * calling init_logging() and shutdown_logging().
+ *
+ * Example usage:
+ * @code
+ * int main() {
+ *     scp::LoggingGuard guard(scp::log::INFO);
+ *     // ... your code ...
+ *     // shutdown_logging() called automatically when guard goes out of scope
+ *     return 0;
+ * }
+ * @endcode
+ *
+ * Or with LogConfig:
+ * @code
+ * int main() {
+ *     scp::LoggingGuard guard(scp::LogConfig()
+ *         .logLevel(scp::log::DEBUG)
+ *         .msgTypeFieldWidth(20));
+ *     // ... your code ...
+ *     return 0;
+ * }
+ * @endcode
+ */
+class LoggingGuard {
+public:
+    /**
+     * @brief Initialize logging with level and optional parameters
+     * @param level the log level
+     * @param type_field_width the width of the type field in the output
+     * @param print_time whether to print the system time stamp
+     */
+    explicit LoggingGuard(log level = log::WARNING,
+                         unsigned type_field_width = 24,
+                         bool print_time = false) {
+        init_logging(level, type_field_width, print_time);
+    }
+
+    /**
+     * @brief Initialize logging with a LogConfig object
+     * @param log_config the logging configuration
+     */
+    explicit LoggingGuard(const LogConfig& log_config) {
+        init_logging(log_config);
+    }
+
+    /**
+     * @brief Destructor that ensures logging resources are cleaned up
+     */
+    ~LoggingGuard() {
+        shutdown_logging();
+    }
+
+    // Prevent copying and moving to ensure single ownership
+    LoggingGuard(const LoggingGuard&) = delete;
+    LoggingGuard& operator=(const LoggingGuard&) = delete;
+    LoggingGuard(LoggingGuard&&) = delete;
+    LoggingGuard& operator=(LoggingGuard&&) = delete;
+};
+/**
  * @fn sc_core::sc_verbosity get_log_verbosity()
  * @brief get the global verbosity level
  *

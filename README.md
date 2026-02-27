@@ -40,19 +40,27 @@ The macros take an optional argument which becomes the message type. If not is p
 
 ### Reporting backend
 
-The backend is initialized using the short form:
+The backend is initialized using `LoggingGuard` which automatically manages logging lifecycle using RAII:
 
+Short form:
 ```
-scp::init_logging(scp::log::INFO);
+scp::LoggingGuard guard(scp::log::INFO);
 ```
 
-or the long form
-
-``` 
-scp::init_logging(scp::LogConfig()
+Long form with configuration:
+```
+scp::LoggingGuard guard(scp::LogConfig()
 		.logLevel(scp::log::DEBUG) // set log level to debug
 		.msgTypeFieldWidth(10));   // make the msg type column a bit tighter
 ```
 
-which allows more configurability. For detail please check the header file report.h
-In both case an alternate report handler is installed which which uses a tabular format and spdlog for writing. By default spdlog logs asyncronously to keep the performance impact low.
+The `LoggingGuard` ensures proper cleanup when it goes out of scope, preventing resource leaks and Windows DLL unload hangs. For detail please check the header file report.h
+
+Alternatively, you can still use the manual approach with `init_logging()` and `shutdown_logging()`:
+```
+scp::init_logging(scp::log::INFO);
+// ... your code ...
+scp::shutdown_logging();
+```
+
+In both cases an alternate report handler is installed which uses a tabular format and spdlog for writing. By default spdlog logs asynchronously to keep the performance impact low.

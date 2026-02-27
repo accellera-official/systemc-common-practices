@@ -290,6 +290,11 @@ void report_handler(const sc_core::sc_report& rep,
     thread_local bool sc_stop_called = false;
     if (actions & sc_core::SC_DO_NOTHING)
         return;
+    // If logging has been shut down, silently ignore log messages
+    // This can happen during static destruction when LoggingGuard is destroyed
+    // before other static objects that log in their destructors
+    if (!log_cfg.console_logger)
+        return;
     if (rep.get_severity() == sc_core::SC_INFO ||
         !log_cfg.report_only_first_error ||
         sc_core::sc_report_handler::get_count(sc_core::SC_ERROR) < 2) {
@@ -462,6 +467,28 @@ auto scp::get_logging_level() -> scp::log {
 
 void scp::set_cycle_base(sc_core::sc_time period) {
     log_cfg.cycle_base = period;
+}
+
+void scp::shutdown_logging() {
+    // Flush all loggers before shutdown
+    if (log_cfg.console_logger) {
+        log_cfg.console_logger->flush();
+    }
+    if (log_cfg.file_logger) {
+        log_cfg.file_logger->flush();
+    }
+
+    // Clear our logger references before dropping them
+    // This prevents use-after-free if logging is attempted after shutdown
+    // (e.g., from static destructors)
+    log_cfg.console_logger.reset();
+    log_cfg.file_logger.reset();
+
+    // Drop all spdlog loggers to release resources
+    spdlog::drop_all();
+
+    // Shutdown the thread pool - this will join all worker threads
+    spdlog::shutdown();
 }
 
 auto scp::LogConfig::logLevel(scp::log level) -> scp::LogConfig& {

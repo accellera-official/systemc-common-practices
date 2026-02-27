@@ -144,7 +144,7 @@ int sc_main(int argc, char** argv) {
 
     std::string logfile = "/tmp/scp_smoke_report_test." +
                           std::to_string(getpid());
-    scp::init_logging(
+    scp::LoggingGuard logging_guard(
         scp::LogConfig()
             .logLevel(scp::log::DEBUG) // set log level to debug
             .msgTypeFieldWidth(20)
